@@ -20,7 +20,6 @@ package au.gov.aims.netcdf;
 
 import au.gov.aims.netcdf.bean.NetCDFDataset;
 import au.gov.aims.netcdf.bean.NetCDFVariable;
-import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Hours;
@@ -43,8 +42,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Create a simple NetCDF dataset that contains data that changes depending on its coordinates.
- * The data is very coarse, to product small NetCDF file.
+ * Generate NetCDF file containing a single data hypercube.
+ *
+ * To simplify the library, some assumptions were made:
+ * - Every variable have the following dimensions: time, lat, lon
+ * - Values are type Double
  *
  * Old Unidata example:
  *     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfFileWriteable.html
@@ -53,50 +55,36 @@ import java.util.TreeSet;
  *     https://www.unidata.ucar.edu/software/netcdf-java/v4.3/v4.3/javadoc/ucar/nc2/NetcdfFileWriter.html
  */
 public class Generator {
-    private static final Logger LOGGER = Logger.getLogger(Generator.class);
+    // Switch to "netcdf3" if you are getting error with the generation of NetCDF4 files
     private static final NetcdfFileWriter.Version NETCDF_VERSION = NetcdfFileWriter.Version.netcdf4;
 
+    // NOTE: Null value can be set using attribute "_FillValue", "missing_value", etc,
+    //     by adding the following line (for example) in the definition of the variable:
+    //         writer.addVariableAttribute(variableName, "_FillValue", 9999);
+    //     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfDataset.html
+    //     or simply using Double.NaN (as in eReefs NetCDF files).
+    // "_FillValue", "missing_value" have different meanings:
+    //     Sometimes there is need for more than one value to represent different kinds of missing data.
+    //     In this case, the user should use one or more other variable attributes for the different kinds
+    //     of missing data. For example, it might be appropriate to use _FillValue to mean that data that
+    //     was expected never appeared, but missing_value where the creator of the data intends data to be
+    //     missing, as around an irregular region represented by a rectangular grid.
+    //     http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_59.html
+    private static final Double NULL_VALUE = Double.NaN;
+
+    // The date represented by time = 0, in NetCDF files
     private static final DateTime NETCDF_EPOCH = new DateTime(1990, 1, 1, 0, 0, DateTimeZone.UTC);
-    private static final DateTimeZone TIMEZONE_BRISBANE = DateTimeZone.forID("Australia/Brisbane");
 
-    public static void main(String ... args) throws Exception {
-        File outputFile = new File("/tmp/gbrRainbow.nc");
-        Generator netCDFGenerator = new Generator();
-        netCDFGenerator.generateGbrRaindow(new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE), outputFile);
-    }
-
-    public void generateGbrRaindow(DateTime startDate, File outputFile) throws IOException, InvalidRangeException {
-        float[] lats = new float[] {-22, -20.8f, -19.6f, -18.4f, -17.2f, -16, -14.8f, -13.6f, -12.4f, -11.2f, -10};
-        float[] lons = {142, 143.2f, 144.4f, 145.6f, 146.8f, 148, 149.2f, 150.4f, 151.6f, 152.8f, 154};
-        NetCDFDataset dataset = new NetCDFDataset(lats, lons);
-
-        NetCDFVariable temp = new NetCDFVariable("temperature", "C");
-        dataset.addVariable(temp);
-
-        NetCDFVariable salt = new NetCDFVariable("salinity", "PSU");
-        dataset.addVariable(salt);
-
-        for (int hour=0; hour<20; hour++) {
-            for (float lat : lats) {
-                for (float lon : lons) {
-                    double tempValue = Math.abs((hour + lat + lon) % 40 - 20) - 10;
-                    temp.addDataPoint(startDate.plusHours(hour), lat, lon, tempValue);
-
-//                    double saltValue = hour + (-10-lat) + (lon-142);
-                    double saltValue = hour + (lat+22) + (-lon+154);
-                    salt.addDataPoint(startDate.plusHours(hour), lat, lon, saltValue);
-                }
-            }
-        }
-
-        this.generate(dataset, outputFile);
-    }
-
+    /**
+     * Generate a NetCDF file containing a single data hypercube
+     * @param dataset
+     * @param outputFile
+     * @throws IOException
+     * @throws InvalidRangeException
+     */
     public void generate(NetCDFDataset dataset, File outputFile) throws IOException, InvalidRangeException {
-        try (NetcdfFileWriter writer = NetcdfFileWriter.createNew(
-            NETCDF_VERSION,
-            outputFile.getAbsolutePath()
-        )) {
+        try (NetcdfFileWriter writer = NetcdfFileWriter.createNew(NETCDF_VERSION, outputFile.getAbsolutePath())) {
+
             float[] lats = dataset.getLatitudes();
             float[] lons = dataset.getLongitudes();
 
@@ -120,15 +108,15 @@ public class Generator {
             writer.addVariableAttribute("time", "units", "hours since 1990-01-01");
 
             for (NetCDFVariable variable : dataset) {
-                String shortName = variable.getName();
+                String variableName = variable.getName();
                 DataType dataType = DataType.DOUBLE;
                 List<Dimension> varDimensions = new ArrayList<Dimension>();
                 varDimensions.add(timeDimension);
                 varDimensions.add(latDimension);
                 varDimensions.add(lonDimension);
 
-                writer.addVariable(shortName, dataType, varDimensions);
-                writer.addVariableAttribute(shortName, "units", variable.getUnit());
+                writer.addVariable(variableName, dataType, varDimensions);
+                writer.addVariableAttribute(variableName, "units", variable.getUnit());
             }
 
             writer.create();
@@ -166,10 +154,8 @@ public class Generator {
                         for (NetCDFVariable variable : dataset) {
                             ArrayDouble.D3 variableData = dataMap.get(variable.getName());
                             if (variableData != null) {
-                                Double value = variable.getData(date, latValue, lonValue);
-                                if (value != null) {
-                                    variableData.set(0, lat, lon, value);
-                                }
+                                Double value = variable.getValue(date, latValue, lonValue);
+                                variableData.set(0, lat, lon, value == null ? NULL_VALUE : value);
                             }
                         }
                     }
@@ -191,11 +177,4 @@ public class Generator {
             writer.flush();
         }
     }
-
-    /*
-     * TODO
-     * 1. Create simple data file covering GBR
-     * 2. Create file with time gaps
-     * 3. Create file with multiple hypercubes of data
-     */
 }

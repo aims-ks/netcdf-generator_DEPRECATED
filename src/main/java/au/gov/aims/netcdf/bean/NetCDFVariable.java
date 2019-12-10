@@ -48,11 +48,11 @@ public class NetCDFVariable {
         return this.data;
     }
 
-    public Double getData(DateTime date, float lat, float lon) {
-        return this.getData(new NetCDFPointCoordinate(date, lat, lon));
+    public Double getValue(DateTime date, float lat, float lon) {
+        return this.getValue(new NetCDFPointCoordinate(date, lat, lon));
     }
 
-    public Double getData(NetCDFPointCoordinate coordinate) {
+    public Double getValue(NetCDFPointCoordinate coordinate) {
         return this.data.get(coordinate);
     }
 
