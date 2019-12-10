@@ -29,7 +29,7 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
     private DateTime date;
     private float lat;
     private float lon;
-    private Double height; // optional
+    private Double height; // Vertical coordinate axis. Optional
 
     public NetCDFPointCoordinate(DateTime date, float lat, float lon) {
         this(date, lat, lon, null);

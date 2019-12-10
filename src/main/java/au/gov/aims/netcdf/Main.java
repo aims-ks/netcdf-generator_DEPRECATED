@@ -71,6 +71,9 @@ public class Main {
         NetCDFVariable salt = new NetCDFVariable("salinity", "PSU");
         dataset.addVariable(salt);
 
+        NetCDFDepthVariable noise = new NetCDFDepthVariable("noise", "dbl");
+        dataset.addVariable(noise);
+
         for (int hour=0; hour<10*24; hour++) {
             DateTime frameDate = startDate.plusHours(hour);
 
@@ -78,9 +81,14 @@ public class Main {
                 for (float lat : lats) {
                     for (float lon : lons) {
 
+                        // Temperature and noise have depths
                         for (double depth : depths) {
                             double tempValue = Math.abs((hour + lat + lon) % 40 - 20) - 10 + depth;
                             temp.addDataPoint(frameDate, lat, lon, depth, tempValue);
+
+                            // Deeper = less noise
+                            double noiseValue = Math.abs((hour - lat + lon + Math.random() * (6 + depth/2)) % (40 + depth) - (40 + depth)/2);
+                            noise.addDataPoint(frameDate, lat, lon, depth, noiseValue);
                         }
 
                         // Salt contains holes in the data

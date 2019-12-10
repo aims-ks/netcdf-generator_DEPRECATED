@@ -135,27 +135,38 @@ public class Generator {
                     bundle.heightDimension = writer.addDimension(bundle.heightVariableName, heights.length);
                 }
 
+                // Coordinate axis attributes.
+                //     It seems to work without them (except for the vertical azis).
+                //     I added them for all axis to follow the documentation.
+                //     https://www.unidata.ucar.edu/software/netcdf-java/current/reference/CoordinateAttributes.html
+                //     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/CoordinateAttributes.html
+
                 // Declare dimension variables (seams redundant, but it's required)
                 List<Dimension> latDimensions = new ArrayList<Dimension>();
                 latDimensions.add(bundle.latDimension);
                 bundle.latVariable = writer.addVariable(bundle.latVariableName, DataType.FLOAT, latDimensions);
                 writer.addVariableAttribute(bundle.latVariableName, "units", "degrees_north");
+                writer.addVariableAttribute(bundle.latVariableName, "_CoordinateAxisType", "Lat");
 
                 List<Dimension> lonDimensions = new ArrayList<Dimension>();
                 lonDimensions.add(bundle.lonDimension);
                 bundle.lonVariable = writer.addVariable(bundle.lonVariableName, DataType.FLOAT, lonDimensions);
                 writer.addVariableAttribute(bundle.lonVariableName, "units", "degrees_east");
+                writer.addVariableAttribute(bundle.lonVariableName, "_CoordinateAxisType", "Lon");
 
                 List<Dimension> timeDimensions = new ArrayList<Dimension>();
                 timeDimensions.add(timeDimension);
                 writer.addVariable(bundle.timeVariableName, DataType.INT, timeDimensions);
                 writer.addVariableAttribute(bundle.timeVariableName, "units", "hours since 1990-01-01");
+                writer.addVariableAttribute(bundle.timeVariableName, "_CoordinateAxisType", "Time");
 
                 if (bundle.heightDimension != null) {
                     List<Dimension> heightDimensions = new ArrayList<Dimension>();
                     heightDimensions.add(bundle.heightDimension);
                     bundle.heightVariable = writer.addVariable(bundle.heightVariableName, DataType.DOUBLE, heightDimensions);
                     writer.addVariableAttribute(bundle.heightVariableName, "units", "m");
+                    writer.addVariableAttribute(bundle.heightVariableName, "_CoordinateAxisType", "Height");
+                    writer.addVariableAttribute(bundle.heightVariableName, "_CoordinateZisPositive", "up");
                 }
 
                 // Declare data variables (such as temp, salt, current, etc)
