@@ -24,12 +24,18 @@ import java.util.Objects;
 
 public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> {
     private static final float COORDINATE_EPSILON = 0.00001f; // about 1 metre on the equator
+    private static final double HEIGHT_EPSILON = 0.0000001;
 
     private DateTime date;
     private float lat;
     private float lon;
+    private Double height; // optional
 
     public NetCDFPointCoordinate(DateTime date, float lat, float lon) {
+        this(date, lat, lon, null);
+    }
+
+    public NetCDFPointCoordinate(DateTime date, float lat, float lon, Double height) {
         if (date == null) {
             throw new IllegalArgumentException("Date can not be null.");
         }
@@ -37,6 +43,7 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
         this.date = date;
         this.lat = lat;
         this.lon = lon;
+        this.height = height;
     }
 
     public DateTime getDate() {
@@ -51,19 +58,24 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
         return this.lon;
     }
 
+    public Double getHeight() {
+        return this.height;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || this.getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         NetCDFPointCoordinate that = (NetCDFPointCoordinate) o;
         return Float.compare(that.lat, this.lat) == 0 &&
                 Float.compare(that.lon, this.lon) == 0 &&
-                Objects.equals(this.date, that.date);
+                Objects.equals(this.date, that.date) &&
+                Objects.equals(this.height, that.height);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.date, this.lat, this.lon);
+        return Objects.hash(this.date, this.lat, this.lon, this.height);
     }
 
     @Override
@@ -89,6 +101,23 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
         }
         if (lonCmp < -COORDINATE_EPSILON) {
             return -1;
+        }
+
+        if (this.height != o.height) {
+            if (this.height == null) {
+                return 1;
+            }
+            if (o.height == null) {
+                return -1;
+            }
+
+            double heightCmp = this.height - o.height;
+            if (heightCmp > HEIGHT_EPSILON) {
+                return 1;
+            }
+            if (heightCmp < -HEIGHT_EPSILON) {
+                return -1;
+            }
         }
 
         return 0;

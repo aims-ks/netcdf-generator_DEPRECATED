@@ -19,6 +19,7 @@
 package au.gov.aims.netcdf;
 
 import au.gov.aims.netcdf.bean.NetCDFDataset;
+import au.gov.aims.netcdf.bean.NetCDFDepthVariable;
 import au.gov.aims.netcdf.bean.NetCDFVariable;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -33,7 +34,7 @@ import java.io.IOException;
  * [X] Create simple data file covering GBR
  * [X] Create file with time gaps
  * [X] Create file with multiple hypercubes of data
- * [ ] Add depth support
+ * [X] Add depth support
  * [ ] Add vector variable support
  */
 
@@ -61,9 +62,10 @@ public class Main {
     public static void generateGbrRaindow(Generator netCDFGenerator, DateTime startDate, File outputFile) throws IOException, InvalidRangeException {
         float[] lats = new float[] {-22, -20.8f, -19.6f, -18.4f, -17.2f, -16, -14.8f, -13.6f, -12.4f, -11.2f, -10};
         float[] lons = {142, 143.2f, 144.4f, 145.6f, 146.8f, 148, 149.2f, 150.4f, 151.6f, 152.8f, 154};
-        NetCDFDataset dataset = new NetCDFDataset(lats, lons);
+        double[] depths = {0, -1, -3, -10};
+        NetCDFDataset dataset = new NetCDFDataset(lats, lons, depths);
 
-        NetCDFVariable temp = new NetCDFVariable("temperature", "C");
+        NetCDFDepthVariable temp = new NetCDFDepthVariable("temperature", "C");
         dataset.addVariable(temp);
 
         NetCDFVariable salt = new NetCDFVariable("salinity", "PSU");
@@ -76,8 +78,10 @@ public class Main {
                 for (float lat : lats) {
                     for (float lon : lons) {
 
-                        double tempValue = Math.abs((hour + lat + lon) % 40 - 20) - 10;
-                        temp.addDataPoint(frameDate, lat, lon, tempValue);
+                        for (double depth : depths) {
+                            double tempValue = Math.abs((hour + lat + lon) % 40 - 20) - 10 + depth;
+                            temp.addDataPoint(frameDate, lat, lon, depth, tempValue);
+                        }
 
                         // Salt contains holes in the data
                         if (hour != 5 && hour != 6) {

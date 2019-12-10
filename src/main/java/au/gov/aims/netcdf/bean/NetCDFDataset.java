@@ -22,16 +22,22 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class NetCDFDataset implements Iterable<NetCDFVariable> {
+public class NetCDFDataset implements Iterable<AbstractNetCDFVariable> {
     private float[] latitudes;
     private float[] longitudes;
+    private double[] heights; // elevation (aka depth)
 
-    private List<NetCDFVariable> variables;
+    private List<AbstractNetCDFVariable> variables;
 
     public NetCDFDataset(float[] latitudes, float[] longitudes) {
+        this(latitudes, longitudes, null);
+    }
+
+    public NetCDFDataset(float[] latitudes, float[] longitudes, double[] heights) {
         this.latitudes = latitudes;
         this.longitudes = longitudes;
-        this.variables = new ArrayList<NetCDFVariable>();
+        this.heights = heights;
+        this.variables = new ArrayList<AbstractNetCDFVariable>();
     }
 
     public float[] getLatitudes() {
@@ -42,11 +48,15 @@ public class NetCDFDataset implements Iterable<NetCDFVariable> {
         return this.longitudes;
     }
 
-    public List<NetCDFVariable> getVariables() {
+    public double[] getHeights() {
+        return this.heights;
+    }
+
+    public List<AbstractNetCDFVariable> getVariables() {
         return this.variables;
     }
 
-    public void setVariables(List<NetCDFVariable> variables) {
+    public void setVariables(List<AbstractNetCDFVariable> variables) {
         if (variables == null) {
             this.variables.clear();
         } else {
@@ -54,12 +64,12 @@ public class NetCDFDataset implements Iterable<NetCDFVariable> {
         }
     }
 
-    public void addVariable(NetCDFVariable variable) {
+    public void addVariable(AbstractNetCDFVariable variable) {
         this.variables.add(variable);
     }
 
     @Override
-    public Iterator<NetCDFVariable> iterator() {
+    public Iterator<AbstractNetCDFVariable> iterator() {
         return this.variables.iterator();
     }
 }
