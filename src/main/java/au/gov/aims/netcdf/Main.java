@@ -55,6 +55,16 @@ public class Main {
         Main.generateMultiHypercube(netCDFGenerator, new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE), new File("/tmp/multi.nc"));
     }
 
+    public static float[] getCoordinates(float min, float max, int steps) {
+        float[] coordinates = new float[steps];
+
+        for (int i=0; i<steps; i++) {
+            coordinates[i] = min + (max - min) * i / (steps - 1);
+        }
+
+        return coordinates;
+    }
+
     /**
      * Create simple NetCDF files that contains data that changes depending on its coordinates.
      * The data is very coarse, to produce small NetCDF file.
@@ -66,8 +76,11 @@ public class Main {
      * @throws InvalidRangeException
      */
     public static void generateGbrRaindow(Generator netCDFGenerator, DateTime startDate, File outputFile) throws IOException, InvalidRangeException {
-        float[] lats = new float[] {-22, -20.8f, -19.6f, -18.4f, -17.2f, -16, -14.8f, -13.6f, -12.4f, -11.2f, -10};
-        float[] lons = new float[] {142, 143.2f, 144.4f, 145.6f, 146.8f, 148, 149.2f, 150.4f, 151.6f, 152.8f, 154};
+        //float[] lats = getCoordinates(-22, -10, 11);
+        //float[] lons = getCoordinates(142, 154, 11);
+        float[] lats = getCoordinates(-22, -10, 21);
+        float[] lons = getCoordinates(142, 154, 21);
+
         double[] depths = {0, -1, -3, -10};
         NetCDFDataset dataset = new NetCDFDataset(lats, lons, depths);
 
@@ -99,20 +112,21 @@ public class Main {
                 for (float lat : lats) {
                     for (float lon : lons) {
 
-                        // Temperature and noise have depths
+                        // Variables with depths
                         for (double depth : depths) {
+                            // Temperature
                             double tempValue = Math.abs((hour + lat + lon) % 40 - 20) - 10 + depth;
                             temp.addDataPoint(frameDate, lat, lon, depth, tempValue);
 
-                            // Deeper = less noise
+                            // Noise - Deeper = less noise
                             double noiseValue = Math.abs((hour - lat + lon + Math.random() * (6 + depth/2)) % (40 + depth) - (40 + depth)/2);
                             noise.addDataPoint(frameDate, lat, lon, depth, noiseValue);
 
-                            // current
-                            double currentUValue = Math.sin((hour + lat + lon) / (-depth + 1)) / 2;
+                            // Current
+                            double currentUValue = Math.sin((hour + lat + lon) / (-depth + 2)) / 2;
                             currentU.addDataPoint(frameDate, lat, lon, depth, currentUValue);
 
-                            double currentVValue = Math.cos((hour + lat - lon) / (-depth + 1)) / 2;
+                            double currentVValue = Math.cos((hour + lat - lon) / (-depth + 2)) / 2;
                             currentV.addDataPoint(frameDate, lat, lon, depth, currentVValue);
                         }
 
@@ -123,10 +137,10 @@ public class Main {
                         }
 
                         // Wind
-                        double windUValue = hour + (lat+22) + (-lon+154);
+                        double windUValue = Math.abs((hour + lat + lon) % 40 - 20);
                         windU.addDataPoint(frameDate, lat, lon, windUValue);
 
-                        double windVValue = hour + (lat+22) + (-lon+154);
+                        double windVValue = Math.abs((hour - lat + lon) % 40 - 20);
                         windV.addDataPoint(frameDate, lat, lon, windVValue);
                     }
                 }
