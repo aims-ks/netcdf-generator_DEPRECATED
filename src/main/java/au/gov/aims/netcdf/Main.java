@@ -35,7 +35,10 @@ import java.io.IOException;
  * [X] Create file with time gaps
  * [X] Create file with multiple hypercubes of data
  * [X] Add depth support
- * [ ] Add vector variable support
+ * [~] Add vector variable support
+ *
+ * NetCDF file samples:
+ *     https://www.unidata.ucar.edu/software/netcdf/examples/files.html
  */
 
 public class Main {
@@ -126,7 +129,7 @@ public class Main {
                     temp0.addDataPoint(frameDate, lat, lon, tempValue);
 
                     // Salt contains holes in the data
-                    double saltValue = hour + (lat+22) + (-lon+154);
+                    double saltValue = hour + (lat+22) + (-lon+154) + Math.random() * 10;
                     salt0.addDataPoint(frameDate, lat, lon, saltValue);
                 }
             }

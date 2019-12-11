@@ -50,8 +50,8 @@ import java.util.TreeSet;
  * - Every variable have the following dimensions: time, lat, lon
  * - Values are type Double
  *
- * Old Unidata example:
- *     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfFileWriteable.html
+ * Unidata example:
+ *     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfWriting.html
  *
  * Java DOC:
  *     https://www.unidata.ucar.edu/software/netcdf-java/v4.3/v4.3/javadoc/ucar/nc2/NetcdfFileWriter.html
