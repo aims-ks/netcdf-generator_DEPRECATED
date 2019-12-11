@@ -28,6 +28,7 @@ public class NetCDFDataset implements Iterable<AbstractNetCDFVariable> {
     private double[] heights; // elevation (aka depth)
 
     private List<AbstractNetCDFVariable> variables;
+    private List<NetCDFVectorVariable> vectorVariables;
 
     public NetCDFDataset(float[] latitudes, float[] longitudes) {
         this(latitudes, longitudes, null);
@@ -38,6 +39,7 @@ public class NetCDFDataset implements Iterable<AbstractNetCDFVariable> {
         this.longitudes = longitudes;
         this.heights = heights;
         this.variables = new ArrayList<AbstractNetCDFVariable>();
+        this.vectorVariables = new ArrayList<NetCDFVectorVariable>();
     }
 
     public float[] getLatitudes() {
@@ -51,6 +53,7 @@ public class NetCDFDataset implements Iterable<AbstractNetCDFVariable> {
     public double[] getHeights() {
         return this.heights;
     }
+
 
     public List<AbstractNetCDFVariable> getVariables() {
         return this.variables;
@@ -68,8 +71,32 @@ public class NetCDFDataset implements Iterable<AbstractNetCDFVariable> {
         this.variables.add(variable);
     }
 
+
+    public List<NetCDFVectorVariable> getVectorVariables() {
+        return this.vectorVariables;
+    }
+
+    public void setVectorVariables(List<NetCDFVectorVariable> vectorVariables) {
+        if (vectorVariables == null) {
+            this.vectorVariables.clear();
+        } else {
+            this.vectorVariables = vectorVariables;
+        }
+    }
+
+    public void addVectorVariable(NetCDFVectorVariable vectorVariable) {
+        this.vectorVariables.add(vectorVariable);
+    }
+
+
     @Override
     public Iterator<AbstractNetCDFVariable> iterator() {
-        return this.variables.iterator();
+        List<AbstractNetCDFVariable> allVariables = new ArrayList<AbstractNetCDFVariable>(this.variables);
+        for (NetCDFVectorVariable vectorVariable : this.vectorVariables) {
+            allVariables.add(vectorVariable.getU());
+            allVariables.add(vectorVariable.getV());
+        }
+
+        return allVariables.iterator();
     }
 }

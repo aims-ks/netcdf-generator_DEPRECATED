@@ -27,22 +27,31 @@ import java.util.TreeSet;
 
 public class AbstractNetCDFVariable {
     private String name;
-    private String unit;
+
+    private Map<String, String> attributes;
+
     private Map<NetCDFPointCoordinate, Double> data;
 
-    protected AbstractNetCDFVariable(String name, String unit) {
+    protected AbstractNetCDFVariable(String name, String units) {
         this.name = name;
-        this.unit = unit;
+        this.attributes = new HashMap<String, String>();
         this.data = new HashMap<NetCDFPointCoordinate, Double>();
+
+        this.setAttribute("units", units);
     }
 
     public String getName() {
         return this.name;
     }
 
-    public String getUnit() {
-        return this.unit;
+    public Map<String, String> getAttributes() {
+        return this.attributes;
     }
+
+    public void setAttribute(String key, String value) {
+        this.attributes.put(key, value);
+    }
+
 
     public Map<NetCDFPointCoordinate, Double> getData() {
         return this.data;

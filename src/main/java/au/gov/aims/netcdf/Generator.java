@@ -183,7 +183,11 @@ public class Generator {
                     }
 
                     writer.addVariable(variableName, dataType, varDimensions);
-                    writer.addVariableAttribute(variableName, "units", variable.getUnit());
+
+                    for (Map.Entry<String, String> attributeEntry : variable.getAttributes().entrySet()) {
+                        // Set variable attributes such as "units", "standard_name", etc
+                        writer.addVariableAttribute(variableName, attributeEntry.getKey(), attributeEntry.getValue());
+                    }
                 }
 
                 datasetCount++;

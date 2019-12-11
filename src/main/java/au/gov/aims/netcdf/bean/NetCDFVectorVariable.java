@@ -18,19 +18,26 @@
  */
 package au.gov.aims.netcdf.bean;
 
-import org.joda.time.DateTime;
+public class NetCDFVectorVariable<V extends AbstractNetCDFVariable> {
+    private String groupName;
+    private V u;
+    private V v;
 
-public class NetCDFDepthVariable extends AbstractNetCDFVariable {
+    public NetCDFVectorVariable(String groupName, V u, V v) {
+        this.groupName = groupName;
 
-    public NetCDFDepthVariable(String name, String units) {
-        super(name, units);
+        this.u = u;
+        this.u.setAttribute("standard_name", String.format("eastward_%s", this.groupName));
+
+        this.v = v;
+        this.v.setAttribute("standard_name", String.format("northward_%s", this.groupName));
     }
 
-    public Double getValue(DateTime date, float lat, float lon, double height) {
-        return this.getValue(new NetCDFPointCoordinate(date, lat, lon, height));
+    public V getU() {
+        return this.u;
     }
 
-    public void addDataPoint(DateTime date, float lat, float lon, double height, double value) {
-        this.addDataPoint(new NetCDFPointCoordinate(date, lat, lon, height), value);
+    public V getV() {
+        return this.v;
     }
 }

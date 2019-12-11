@@ -21,8 +21,8 @@ package au.gov.aims.netcdf.bean;
 import org.joda.time.DateTime;
 
 public class NetCDFVariable extends AbstractNetCDFVariable {
-    public NetCDFVariable(String name, String unit) {
-        super(name, unit);
+    public NetCDFVariable(String name, String units) {
+        super(name, units);
     }
 
     public Double getValue(DateTime date, float lat, float lon) {
