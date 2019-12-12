@@ -26,28 +26,25 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
     private static final float COORDINATE_EPSILON = 0.00001f; // about 1 metre on the equator
     private static final double HEIGHT_EPSILON = 0.0000001;
 
-    private DateTime date;
     private float lat;
     private float lon;
+
+    private DateTime date; // Data date. Optional
     private Double height; // Vertical coordinate axis. Optional
 
-    public NetCDFPointCoordinate(DateTime date, float lat, float lon) {
-        this(date, lat, lon, null);
+    public NetCDFPointCoordinate(float lat, float lon) {
+        this(lat, lon, null, null);
     }
 
-    public NetCDFPointCoordinate(DateTime date, float lat, float lon, Double height) {
-        if (date == null) {
-            throw new IllegalArgumentException("Date can not be null.");
-        }
+    public NetCDFPointCoordinate(float lat, float lon, DateTime date) {
+        this(lat, lon, date, null);
+    }
 
-        this.date = date;
+    public NetCDFPointCoordinate(float lat, float lon, DateTime date, Double height) {
         this.lat = lat;
         this.lon = lon;
+        this.date = date;
         this.height = height;
-    }
-
-    public DateTime getDate() {
-        return this.date;
     }
 
     public float getLat() {
@@ -56,6 +53,10 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
 
     public float getLon() {
         return this.lon;
+    }
+
+    public DateTime getDate() {
+        return this.date;
     }
 
     public Double getHeight() {
@@ -75,17 +76,12 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.date, this.lat, this.lon, this.height);
+        return Objects.hash(this.lat, this.lon, this.date, this.height);
     }
 
     @Override
     public int compareTo(NetCDFPointCoordinate o) {
         if (this == o) return 0;
-
-        int dateCmp = this.date.compareTo(o.date);
-        if (dateCmp != 0) {
-            return dateCmp;
-        }
 
         float latCmp = this.lat - o.lat;
         if (latCmp > COORDINATE_EPSILON) {
@@ -101,6 +97,20 @@ public class NetCDFPointCoordinate implements Comparable<NetCDFPointCoordinate> 
         }
         if (lonCmp < -COORDINATE_EPSILON) {
             return -1;
+        }
+
+        if (this.date != o.date) {
+            if (this.date == null) {
+                return 1;
+            }
+            if (o.date == null) {
+                return -1;
+            }
+
+            int dateCmp = this.date.compareTo(o.date);
+            if (dateCmp != 0) {
+                return dateCmp;
+            }
         }
 
         if (this.height != o.height) {

@@ -20,17 +20,17 @@ package au.gov.aims.netcdf.bean;
 
 import org.joda.time.DateTime;
 
-public class NetCDFDepthVariable extends AbstractNetCDFVariable {
+public class NetCDFTimeDepthVariable extends AbstractNetCDFVariable {
 
-    public NetCDFDepthVariable(String name, String units) {
+    public NetCDFTimeDepthVariable(String name, String units) {
         super(name, units);
     }
 
-    public Double getValue(DateTime date, float lat, float lon, double height) {
-        return this.getValue(new NetCDFPointCoordinate(date, lat, lon, height));
+    public Double getValue(float lat, float lon, DateTime date, double height) {
+        return this.getValue(new NetCDFPointCoordinate(lat, lon, date, height));
     }
 
-    public void addDataPoint(DateTime date, float lat, float lon, double height, double value) {
-        this.addDataPoint(new NetCDFPointCoordinate(date, lat, lon, height), value);
+    public void addDataPoint(float lat, float lon, DateTime date, double height, double value) {
+        this.addDataPoint(new NetCDFPointCoordinate(lat, lon, date, height), value);
     }
 }

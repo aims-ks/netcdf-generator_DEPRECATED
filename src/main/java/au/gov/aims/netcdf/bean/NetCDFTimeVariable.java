@@ -18,16 +18,18 @@
  */
 package au.gov.aims.netcdf.bean;
 
-public class NetCDFVariable extends AbstractNetCDFVariable {
-    public NetCDFVariable(String name, String units) {
+import org.joda.time.DateTime;
+
+public class NetCDFTimeVariable extends AbstractNetCDFVariable {
+    public NetCDFTimeVariable(String name, String units) {
         super(name, units);
     }
 
-    public Double getValue(float lat, float lon) {
-        return this.getValue(new NetCDFPointCoordinate(lat, lon));
+    public Double getValue(float lat, float lon, DateTime date) {
+        return this.getValue(new NetCDFPointCoordinate(lat, lon, date));
     }
 
-    public void addDataPoint(float lat, float lon, double value) {
-        this.addDataPoint(new NetCDFPointCoordinate(lat, lon), value);
+    public void addDataPoint(float lat, float lon, DateTime date, double value) {
+        this.addDataPoint(new NetCDFPointCoordinate(lat, lon, date), value);
     }
 }

@@ -64,7 +64,9 @@ public class AbstractNetCDFVariable {
     public SortedSet<DateTime> getDates() {
         SortedSet<DateTime> dates = new TreeSet<DateTime>();
         for (NetCDFPointCoordinate dataPoint : this.data.keySet()) {
-            dates.add(dataPoint.getDate());
+            if (dataPoint.getDate() != null) {
+                dates.add(dataPoint.getDate());
+            }
         }
         return dates;
     }
