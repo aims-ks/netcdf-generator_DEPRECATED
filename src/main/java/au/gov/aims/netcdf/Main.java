@@ -25,6 +25,7 @@ import au.gov.aims.netcdf.bean.NetCDFVectorVariable;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Hours;
 import ucar.ma2.InvalidRangeException;
 
 import java.io.File;
@@ -50,9 +51,23 @@ public class Main {
 
     public static void main(String ... args) throws Exception {
         Generator netCDFGenerator = new Generator();
-        Main.generateGbrRaindow(netCDFGenerator, new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE), new File("/tmp/gbrRainbow.nc"));
 
-        Main.generateMultiHypercube(netCDFGenerator, new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE), new File("/tmp/multi.nc"));
+        Main.generateTest(netCDFGenerator,
+                new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2019, 1, 2, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/test.nc"));
+
+/*
+        Main.generateGbrRaindow(netCDFGenerator,
+                new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2019, 1, 10, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbrRainbow.nc"));
+
+        Main.generateMultiHypercube(netCDFGenerator,
+                new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2019, 1, 10, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/multi.nc"));
+*/
     }
 
     public static float[] getCoordinates(float min, float max, int steps) {
@@ -65,23 +80,114 @@ public class Main {
         return coordinates;
     }
 
+
+    /**
+     * Create data that shows as a linear gradient, at a given angle
+     * @param lat Latitude coordinate, in degree
+     * @param lon Longitude coordinate, in degree
+     * @param min Minimum output value
+     * @param max Maximum output value
+     * @param mag Distance between gradient, in lon / lat degree
+     * @param angle The angle of the gradient, in degree. 0 for horizontal, turning clockwise.
+     * @param noise Level of noise, between [0, 1]
+     * @return A value between [min, max] for the given coordinate.
+     */
+    public static double drawLinearGradient(float lat, float lon, double min, double max, double mag, double angle, double noise) {
+        double noisyLat = lat + (Math.random() - 0.5) * 90 * noise;
+        double noisyLon = lon + (Math.random() - 0.5) * 90 * noise;
+
+        double radianAngle = Math.toRadians(angle);
+
+        double latRatio = Math.cos(radianAngle);
+        double lonRatio = Math.sin(radianAngle);
+
+        // Value between [1, -1]
+        double trigoValue = Math.sin(2 * Math.PI * (noisyLat * latRatio + noisyLon * lonRatio) / mag);
+
+        // Value between [0, 1]
+        double ratioValue = (trigoValue + 1) / 2;
+
+        // Value between [min, max]
+        return min + ratioValue * (max - min);
+    }
+
+    /**
+     * Create data that shows as a radial gradient, with a given diameter
+     * @param lat Latitude coordinate, in degree
+     * @param lon Longitude coordinate, in degree
+     * @param min Minimum output value
+     * @param max Maximum output value
+     * @param diameter Diameter of the circles
+     * @param noise Level of noise, between [0, 1]
+     * @return A value between [min, max] for the given coordinate.
+     */
+    public static double drawRadialGradient(float lat, float lon, double min, double max, double diameter, double noise) {
+        double noisyLat = lat + (Math.random() - 0.5) * 90 * noise;
+        double noisyLon = lon + (Math.random() - 0.5) * 90 * noise;
+
+        // Value between [-2, 2]
+        double trigoValue = Math.cos(2 * Math.PI * noisyLat / diameter) + Math.sin(2 * Math.PI * noisyLon / diameter);
+
+        // Value between [0, 1]
+        double ratioValue = (trigoValue + 2) / 4;
+
+        return min + ratioValue * (max - min);
+    }
+
+    public static void generateTest(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        float[] lats = getCoordinates(-50, 50, 100);
+        float[] lons = getCoordinates(-50, 50, 100);
+
+        int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
+
+
+        NetCDFDataset dataset = new NetCDFDataset(lats, lons);
+
+        NetCDFVariable testLinearGradient = new NetCDFVariable("testLinearGradient", "Index");
+        dataset.addVariable(testLinearGradient);
+
+        NetCDFVariable testRadialGradient = new NetCDFVariable("testRadialGradient", "Index");
+        dataset.addVariable(testRadialGradient);
+
+        for (int hour=0; hour<nbHours; hour++) {
+            DateTime frameDate = startDate.plusHours(hour);
+
+            for (float lat : lats) {
+                for (float lon : lons) {
+                    double testLinearGradientValue = drawLinearGradient(lat, lon, 0, 10, 50, hour * 10, 0);
+                    testLinearGradient.addDataPoint(frameDate, lat, lon, testLinearGradientValue);
+
+                    double testRadialGradientValue = drawRadialGradient(lat, lon, -10, 2, 50, hour * 0.01);
+                    testRadialGradient.addDataPoint(frameDate, lat, lon, testRadialGradientValue);
+                }
+            }
+        }
+
+        netCDFGenerator.generate(outputFile, dataset);
+    }
+
+
+
     /**
      * Create simple NetCDF files that contains data that changes depending on its coordinates.
      * The data is very coarse, to produce small NetCDF file.
      *
-     * @param netCDFGenerator
-     * @param startDate
-     * @param outputFile
+     * @param netCDFGenerator The NetCDF file generator
+     * @param startDate The start date, inclusive
+     * @param endDate The end date, exclusive
+     * @param outputFile The location on disk where to save the NetCDF file
      * @throws IOException
      * @throws InvalidRangeException
      */
-    public static void generateGbrRaindow(Generator netCDFGenerator, DateTime startDate, File outputFile) throws IOException, InvalidRangeException {
-        //float[] lats = getCoordinates(-22, -10, 11);
-        //float[] lons = getCoordinates(142, 154, 11);
+    public static void generateGbrRaindow(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
         float[] lats = getCoordinates(-22, -10, 21);
         float[] lons = getCoordinates(142, 154, 21);
 
         double[] depths = {0, -1, -3, -10};
+
+        int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
+
+
         NetCDFDataset dataset = new NetCDFDataset(lats, lons, depths);
 
         NetCDFDepthVariable temp = new NetCDFDepthVariable("temperature", "C");
@@ -105,7 +211,7 @@ public class Main {
                 new NetCDFVectorVariable<NetCDFVariable>("wind", windU, windV);
         dataset.addVectorVariable(wind);
 
-        for (int hour=0; hour<10*24; hour++) {
+        for (int hour=0; hour<nbHours; hour++) {
             DateTime frameDate = startDate.plusHours(hour);
 
             if (hour != 2 && hour != 3) {
@@ -151,9 +257,12 @@ public class Main {
     }
 
 
-    public static void generateMultiHypercube(Generator netCDFGenerator, DateTime startDate, File outputFile) throws IOException, InvalidRangeException {
-        float[] lats0 = new float[] {-22, -20.8f, -19.6f, -18.4f, -17.2f, -16, -14.8f, -13.6f, -12.4f, -11.2f, -10};
-        float[] lons0 = {142, 143.2f, 144.4f, 145.6f, 146.8f, 148, 149.2f, 150.4f, 151.6f, 152.8f, 154};
+    public static void generateMultiHypercube(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
+        int hourOffset = 3; // Number of hours to offset the second data hypercube
+
+        float[] lats0 = getCoordinates(-22, -10, 21);
+        float[] lons0 = getCoordinates(142, 154, 21);
 
         NetCDFDataset dataset0 = new NetCDFDataset(lats0, lons0);
 
@@ -163,7 +272,7 @@ public class Main {
         NetCDFVariable salt0 = new NetCDFVariable("salinity", "PSU");
         dataset0.addVariable(salt0);
 
-        for (int hour=0; hour<10*24; hour++) {
+        for (int hour=0; hour<nbHours; hour++) {
             DateTime frameDate = startDate.plusHours(hour);
 
             for (float lat : lats0) {
@@ -179,9 +288,8 @@ public class Main {
         }
 
 
-
-        float[] lats1 = new float[] {-24, -22.8f, -21.6f, -20.4f, -19.2f, -18, -16.8f, -15.6f, -14.4f, -13.2f, -12};
-        float[] lons1 = {144, 145.2f, 146.4f, 147.6f, 148.8f, 150, 151.2f, 152.4f, 153.6f, 154.8f, 155};
+        float[] lats1 = getCoordinates(-24, -12, 21);
+        float[] lons1 = getCoordinates(144, 156, 21);
 
         NetCDFDataset dataset1 = new NetCDFDataset(lats1, lons1);
 
@@ -191,7 +299,7 @@ public class Main {
         NetCDFVariable salt1 = new NetCDFVariable("salinity1", "PSU");
         dataset1.addVariable(salt1);
 
-        for (int hour=13; hour<5*24; hour+=3) {
+        for (int hour=hourOffset; hour<nbHours+hourOffset; hour+=3) {
             DateTime frameDate = startDate.plusHours(hour);
 
             for (float lat : lats1) {
