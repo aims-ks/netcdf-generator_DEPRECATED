@@ -213,130 +213,109 @@ public class Generator {
                 if (heights != null) {
                     writer.write(bundle.heightVariable, Array.factory(DataType.DOUBLE, new int [] {heights.length}, heights));
                 }
-                // NOTE: The time dimension data is created on the fly, while adding data records bellow
 
-                // Create a map of all the data for each variable.
-                // The data is written to the NetCDF file, one variable at the time.
-                Map<String, ArrayDouble> dataMap = new HashMap<String, ArrayDouble>();
-                // Create a list dates used across all variables (some variables might have time gap)
+                // Create a list of all dates used across variables (some variables might have time gap)
                 Set<DateTime> allDateTime = new TreeSet<DateTime>();
                 for (AbstractNetCDFVariable variable : bundle.dataset) {
-                    if (variable instanceof NetCDFTimeDepthVariable) {
-                        dataMap.put(
-                                variable.getName(),
-                                new ArrayDouble.D4(1, bundle.latDimension.getLength(), bundle.lonDimension.getLength(), bundle.heightDimension.getLength())
-                        );
-                    } else if (variable instanceof NetCDFTimeVariable) {
-                        dataMap.put(
-                                variable.getName(),
-                                new ArrayDouble.D3(1, bundle.latDimension.getLength(), bundle.lonDimension.getLength())
-                        );
-                    } else if (variable instanceof NetCDFVariable) {
-                        dataMap.put(
-                                variable.getName(),
-                                new ArrayDouble.D2(bundle.latDimension.getLength(), bundle.lonDimension.getLength())
-                        );
-                    }
                     allDateTime.addAll(variable.getDates());
                 }
 
-                // Initialise the data array for the time variable
-                Array timeData = Array.factory(DataType.INT, new int[] {1});
+                // Write the time dimension data to the NetCDf file
+                if (!allDateTime.isEmpty()) {
+                    // Initialise the data array for the time variable
+                    Array timeData = Array.factory(DataType.INT, new int[] {1});
 
+                    // Write all the dates to the NetCDF file
+                    int recordIndex = 0;
+                    Index timeIndex = timeData.getIndex();
+                    for (DateTime date : allDateTime) {
+                        // Calculate the number of hours that elapsed since NetCDF epoch and the provided date
+                        // (that's how dates are recorded in NetCDF files)
+                        int timeOffset = Hours.hoursBetween(NETCDF_EPOCH, date).getHours();
 
+                        // Set the time data for the current record
+                        timeData.setInt(timeIndex, timeOffset);
 
+                        writer.write(bundle.timeVariableName, new int[] {recordIndex}, timeData);
+                        recordIndex++;
+                    }
+                }
 
-                // Create each record for data without date
+                // Write each variable to the NetCDF file, one variable at the time.
+                for (AbstractNetCDFVariable abstractVariable : bundle.dataset) {
 
-                // TODO Optimise! Fill each variable one by one instead of my date
+                    if (abstractVariable instanceof NetCDFVariable) {
+                        // Variables without time nor depth (such as bathymetry "botz")
+                        ArrayDouble.D2 variableData = new ArrayDouble.D2(bundle.latDimension.getLength(), bundle.lonDimension.getLength());
 
-                // Set the data for each coordinate (lon / lat),
-                //     for each variable (temp, salt, current, etc),
-                //     for the specified record time.
-                for (int latIndex=0; latIndex<bundle.latDimension.getLength(); latIndex++) {
-                    float latValue = lats[latIndex];
-                    for (int lonIndex=0; lonIndex<bundle.lonDimension.getLength(); lonIndex++) {
-                        float lonValue = lons[lonIndex];
-                        for (AbstractNetCDFVariable abstractVariable : bundle.dataset) {
-                            ArrayDouble variableData = dataMap.get(abstractVariable.getName());
-                            if (variableData != null) {
-                                if ((variableData instanceof ArrayDouble.D2) && (abstractVariable instanceof NetCDFVariable)) {
-                                    NetCDFVariable variable = (NetCDFVariable)abstractVariable;
-                                    Double value = variable.getValue(latValue, lonValue);
-                                    ((ArrayDouble.D2)variableData).set(latIndex, lonIndex, value == null ? NULL_VALUE : value);
-                                }
+                        for (int latIndex=0; latIndex<bundle.latDimension.getLength(); latIndex++) {
+                            float latValue = lats[latIndex];
+                            for (int lonIndex=0; lonIndex<bundle.lonDimension.getLength(); lonIndex++) {
+                                float lonValue = lons[lonIndex];
+                                NetCDFVariable variable = (NetCDFVariable)abstractVariable;
+                                Double value = variable.getValue(latValue, lonValue);
+                                variableData.set(latIndex, lonIndex, value == null ? NULL_VALUE : value);
                             }
                         }
-                    }
-                }
 
-                // Write the data out for the current record
-                for (AbstractNetCDFVariable abstractVariable : bundle.dataset) {
-                    if (abstractVariable instanceof NetCDFVariable) {
-                        ArrayDouble variableData = dataMap.get(abstractVariable.getName());
+                        // Write the data out for the current record
                         writer.write(abstractVariable.getName(), new int[] {0, 0}, variableData);
-                    }
-                }
 
+                    } else if (abstractVariable instanceof NetCDFTimeVariable) {
+                        // Variables with time, but no depth (such as wind)
+                        int recordIndex = 0;
+                        ArrayDouble.D3 variableData = new ArrayDouble.D3(1, bundle.latDimension.getLength(), bundle.lonDimension.getLength());
+                        for (DateTime date : allDateTime) {
+                            // Set the data for each coordinate (lon / lat),
+                            //     for each variable (temp, salt, current, etc),
+                            //     for the specified record time.
+                            for (int latIndex=0; latIndex<bundle.latDimension.getLength(); latIndex++) {
+                                float latValue = lats[latIndex];
+                                for (int lonIndex=0; lonIndex<bundle.lonDimension.getLength(); lonIndex++) {
+                                    float lonValue = lons[lonIndex];
+                                    NetCDFTimeVariable variable = (NetCDFTimeVariable)abstractVariable;
+                                    Double value = variable.getValue(latValue, lonValue, date);
+                                    variableData.set(0, latIndex, lonIndex, value == null ? NULL_VALUE : value);
+                                }
+                            }
 
+                            // Write the data out for the current record
+                            writer.write(abstractVariable.getName(), new int[] {recordIndex, 0, 0}, variableData);
 
+                            // Increase the record index count
+                            recordIndex++;
+                        }
 
-
-                // Create each record for time based data
-                Index timeIndex = timeData.getIndex();
-                int recordIndex = 0;
-                for (DateTime date : allDateTime) {
-                    // Calculate the number of hours that elapsed since NetCDF epoch and the provided date
-                    // (that's how dates are recorded in NetCDF files)
-                    int timeOffset = Hours.hoursBetween(NETCDF_EPOCH, date).getHours();
-                    // Set the time data for the current record
-                    timeData.setInt(timeIndex, timeOffset);
-
-                    // Set the data for each coordinate (lon / lat),
-                    //     for each variable (temp, salt, current, etc),
-                    //     for the specified record time.
-                    for (int latIndex=0; latIndex<bundle.latDimension.getLength(); latIndex++) {
-                        float latValue = lats[latIndex];
-                        for (int lonIndex=0; lonIndex<bundle.lonDimension.getLength(); lonIndex++) {
-                            float lonValue = lons[lonIndex];
-                            for (AbstractNetCDFVariable abstractVariable : bundle.dataset) {
-                                ArrayDouble variableData = dataMap.get(abstractVariable.getName());
-                                if (variableData != null) {
-                                    if ((variableData instanceof ArrayDouble.D4) && (abstractVariable instanceof NetCDFTimeDepthVariable)) {
-                                        NetCDFTimeDepthVariable depthVariable = (NetCDFTimeDepthVariable)abstractVariable;
-                                        for (int heightIndex=0; heightIndex<bundle.heightDimension.getLength(); heightIndex++) {
-                                            double heightValue = heights[heightIndex];
-                                            Double value = depthVariable.getValue(latValue, lonValue, date, heightValue);
-                                            ((ArrayDouble.D4)variableData).set(0, latIndex, lonIndex, heightIndex, value == null ? NULL_VALUE : value);
-                                        }
-                                    } else if ((variableData instanceof ArrayDouble.D3) && (abstractVariable instanceof NetCDFTimeVariable)) {
-                                        NetCDFTimeVariable variable = (NetCDFTimeVariable)abstractVariable;
-                                        Double value = variable.getValue(latValue, lonValue, date);
-                                        ((ArrayDouble.D3)variableData).set(0, latIndex, lonIndex, value == null ? NULL_VALUE : value);
+                    } else if (abstractVariable instanceof NetCDFTimeDepthVariable) {
+                        // Variables with time and depth (such as salinity, temperature, current)
+                        int recordIndex = 0;
+                        ArrayDouble.D4 variableData = new ArrayDouble.D4(1, bundle.latDimension.getLength(), bundle.lonDimension.getLength(), bundle.heightDimension.getLength());
+                        for (DateTime date : allDateTime) {
+                            // Set the data for each coordinate (lon / lat),
+                            //     for each variable (temp, salt, current, etc),
+                            //     for the specified record time.
+                            for (int latIndex=0; latIndex<bundle.latDimension.getLength(); latIndex++) {
+                                float latValue = lats[latIndex];
+                                for (int lonIndex=0; lonIndex<bundle.lonDimension.getLength(); lonIndex++) {
+                                    float lonValue = lons[lonIndex];
+                                    NetCDFTimeDepthVariable depthVariable = (NetCDFTimeDepthVariable)abstractVariable;
+                                    for (int heightIndex=0; heightIndex<bundle.heightDimension.getLength(); heightIndex++) {
+                                        double heightValue = heights[heightIndex];
+                                        Double value = depthVariable.getValue(latValue, lonValue, date, heightValue);
+                                        variableData.set(0, latIndex, lonIndex, heightIndex, value == null ? NULL_VALUE : value);
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    // Write the data out for the current record
-                    for (AbstractNetCDFVariable abstractVariable : bundle.dataset) {
-
-                        if (abstractVariable instanceof NetCDFTimeDepthVariable) {
-                            ArrayDouble variableData = dataMap.get(abstractVariable.getName());
+                            // Write the data out for the current record
                             writer.write(abstractVariable.getName(), new int[] {recordIndex, 0, 0, 0}, variableData);
 
-                        } else if (abstractVariable instanceof NetCDFTimeVariable) {
-                            ArrayDouble variableData = dataMap.get(abstractVariable.getName());
-                            writer.write(abstractVariable.getName(), new int[] {recordIndex, 0, 0}, variableData);
+                            // Increase the record index count
+                            recordIndex++;
                         }
                     }
-
-                    writer.write(bundle.timeVariableName, new int[] {recordIndex}, timeData);
-
-                    // Increase the record index count
-                    recordIndex++;
                 }
+
 
             }
 

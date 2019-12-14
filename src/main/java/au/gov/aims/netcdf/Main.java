@@ -58,14 +58,14 @@ public class Main {
                 new DateTime(2019, 1, 3, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/test.nc"));
 
-        //Main.generateAllGbr4v2(netCDFGenerator);
+        Main.generateAllGbr4v2(netCDFGenerator);
     }
 
     public static void generateAllGbr4v2(Generator netCDFGenerator) throws IOException, InvalidRangeException {
         Main.generateGbr4v2(netCDFGenerator,
                 new DateTime(2018, 11, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2018, 12, 1, 0, 0, TIMEZONE_BRISBANE),
-                new File("/tmp/gbr4_2018-12.nc"));
+                new File("/tmp/gbr4_2018-11.nc"));
 
         Main.generateGbr4v2(netCDFGenerator,
                 new DateTime(2018, 12, 1, 0, 0, TIMEZONE_BRISBANE),
@@ -96,8 +96,8 @@ public class Main {
 
 
     public static void generateGbr4v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
-        float[] lats = getCoordinates(-22, -10, 21);
-        float[] lons = getCoordinates(142, 154, 21);
+        float[] lats = getCoordinates(-22, -10, 21); // y
+        float[] lons = getCoordinates(142, 154, 21); // x
 
         // List of all depths found in GBR4 v2 files
         double[] allDepths = {-3890, -3680, -3480, -3280, -3080, -2880, -2680, -2480, -2280, -2080, -1880, -1680, -1480, -1295, -1135, -990, -865, -755, -655, -570, -495, -430, -370, -315, -270, -235, -200, -170, -145, -120, -103, -88, -73, -60, -49, -39.5, -31, -23.75, -17.75, -12.75, -8.8, -5.55, -3, -1.5, -0.5, 0.5, 1.5};
@@ -108,7 +108,7 @@ public class Main {
         double[] depths = usedDepths;
 
 
-        NetCDFDataset dataset = new NetCDFDataset(lats, lons);
+        NetCDFDataset dataset = new NetCDFDataset(lats, lons, depths);
 
         NetCDFTimeDepthVariable tempVar = new NetCDFTimeDepthVariable("temp", "degrees C");
         dataset.addVariable(tempVar);
@@ -116,8 +116,8 @@ public class Main {
         NetCDFTimeDepthVariable saltVar = new NetCDFTimeDepthVariable("salt", "PSU");
         dataset.addVariable(saltVar);
 
-        NetCDFTimeDepthVariable RT_exposeVar = new NetCDFTimeDepthVariable("RT_expose", "DegC week");
-        dataset.addVariable(RT_exposeVar);
+        //NetCDFTimeDepthVariable RT_exposeVar = new NetCDFTimeDepthVariable("RT_expose", "DegC week");
+        //dataset.addVariable(RT_exposeVar);
 
         NetCDFTimeVariable wspeed_uVar = new NetCDFTimeVariable("wspeed_u", "ms-1");
         NetCDFTimeVariable wspeed_vVar = new NetCDFTimeVariable("wspeed_v", "ms-1");
@@ -127,19 +127,65 @@ public class Main {
         NetCDFTimeDepthVariable vVar = new NetCDFTimeDepthVariable("v", "ms-1");
         dataset.addVectorVariable(new NetCDFVectorVariable<NetCDFTimeDepthVariable>("sea_water_velocity", uVar, vVar));
 
-        NetCDFTimeDepthVariable dhwVar = new NetCDFTimeDepthVariable("dhw", "DegC-week");
-        dataset.addVariable(dhwVar);
+        //NetCDFTimeDepthVariable dhwVar = new NetCDFTimeDepthVariable("dhw", "DegC-week");
+        //dataset.addVariable(dhwVar);
 
-        NetCDFTimeVariable etaVar = new NetCDFTimeVariable("eta", "metre");
-        dataset.addVariable(etaVar);
+        //NetCDFTimeVariable etaVar = new NetCDFTimeVariable("eta", "metre");
+        //dataset.addVariable(etaVar);
 
-        NetCDFTimeDepthVariable temp_exposeVar = new NetCDFTimeDepthVariable("temp_expose", "DegC week");
-        dataset.addVariable(temp_exposeVar);
+        //NetCDFTimeDepthVariable temp_exposeVar = new NetCDFTimeDepthVariable("temp_expose", "DegC week");
+        //dataset.addVariable(temp_exposeVar);
 
-        // TODO NO TIME!
         NetCDFVariable botzVar = new NetCDFVariable("botz", "metre");
         dataset.addVariable(botzVar);
+
+
+        int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
+        for (float lat : lats) {
+            for (float lon : lons) {
+                // Set data for NetCDFVariable
+                double botzValue = lat % 10 + lon % 10;
+                botzVar.addDataPoint(lat, lon, botzValue);
+
+                for (int hour=0; hour<nbHours; hour++) {
+                    DateTime frameDate = startDate.plusHours(hour);
+
+                    // Set data for NetCDFTimeVariable
+
+                    // Wind
+                    double windUValue = Main.drawLinearGradient(lat, lon - hour, -10, -8, 100, 70, 0);
+                    double windVValue = Main.drawLinearGradient(lat - hour, lon, 2, 17, 50, -20, 0);
+                    wspeed_uVar.addDataPoint(lat, lon, frameDate, windUValue);
+                    wspeed_vVar.addDataPoint(lat, lon, frameDate, windVValue);
+
+                    for (double depth : depths) {
+                        // Set data for NetCDFTimeDepthVariable
+
+                        // Temperature
+                        double worldTempValue = Main.drawLinearGradient(lat+45, lon, 0, 30, 180, 0, (-depth + 2) / 5000); // Hot at the equator, cold at the poles
+                        double qldTempValue = Main.drawLinearGradient(lat, lon+31, -4, 4, 20, 60, (-depth + 2) / 5000); // Hotter closer to the coastline
+                        double dayNight = (Math.abs((hour + 12) % 24 - 12) - 6) / 4.0; // Temperature varies +/- 1 degree between day and night
+                        tempVar.addDataPoint(lat, lon, frameDate, depth, worldTempValue + qldTempValue + dayNight + depth/10);
+
+                        // Salt
+                        double saltValue = Main.drawRadialGradient(lat+(hour/4.0f), lon-(hour/4.0f), 32, 36, 10, (-depth + 2) / 5000);
+                        saltVar.addDataPoint(lat, lon, frameDate, depth, saltValue);
+
+                        // Current
+                        double currentUValue = Main.drawRadialGradient(lat-(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
+                        double currentVValue = Main.drawRadialGradient(lat+(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
+                        uVar.addDataPoint(lat, lon, frameDate, depth, currentUValue);
+                        vVar.addDataPoint(lat, lon, frameDate, depth, currentVValue);
+                    }
+                }
+            }
+        }
+
+        netCDFGenerator.generate(outputFile, dataset);
     }
+
+
+
 
     public static void generateGbr1v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
         float[] lats = getCoordinates(-22, -10, 21);
@@ -186,6 +232,9 @@ public class Main {
         NetCDFVariable botzVar = new NetCDFVariable("botz", "metre");
         dataset.addVariable(botzVar);
 
+        NetCDFVariable botz2Var = new NetCDFVariable("botz2", "metre");
+        dataset.addVariable(botz2Var);
+
         NetCDFTimeVariable testLinearGradient = new NetCDFTimeVariable("testLinearGradient", "Index");
         dataset.addVariable(testLinearGradient);
 
@@ -201,6 +250,7 @@ public class Main {
             for (float lon : lons) {
                 double botzValue = lat % 10 + lon % 10;
                 botzVar.addDataPoint(lat, lon, botzValue);
+                botz2Var.addDataPoint(lat, lon, -botzValue);
 
                 for (int hour=0; hour<nbHours; hour++) {
                     DateTime frameDate = startDate.plusHours(hour);
