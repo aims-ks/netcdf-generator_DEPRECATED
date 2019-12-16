@@ -122,9 +122,9 @@ public class Generator {
                     bundle.heightVariableName += datasetCount;
                 }
 
-                float[] lats = dataset.getLatitudes();
-                float[] lons = dataset.getLongitudes();
-                double[] heights = dataset.getHeights();
+                float[] lats = bundle.lats;
+                float[] lons = bundle.lons;
+                double[] heights = bundle.heights;
 
                 // Declare lat / lon / time dimensions
                 bundle.latDimension = writer.addDimension(bundle.latVariableName, lats.length);
@@ -203,9 +203,9 @@ public class Generator {
 
 
             for (Bundle bundle : bundleList) {
-                float[] lats = bundle.dataset.getLatitudes();
-                float[] lons = bundle.dataset.getLongitudes();
-                double[] heights = bundle.dataset.getHeights();
+                float[] lats = bundle.lats;
+                float[] lons = bundle.lons;
+                double[] heights = bundle.heights;
 
                 // Write all the lat / lon / heights (depths) values that will be used with the data.
                 writer.write(bundle.latVariable, Array.factory(DataType.FLOAT, new int [] {lats.length}, lats));
@@ -327,6 +327,9 @@ public class Generator {
     // Simple class to keep generation variables together
     private static class Bundle {
         public NetCDFDataset dataset;
+        public float[] lats;
+        public float[] lons;
+        public double[] heights;
 
         public String latVariableName;
         public Dimension latDimension;
@@ -344,6 +347,11 @@ public class Generator {
 
         public Bundle(NetCDFDataset dataset) {
             this.dataset = dataset;
+
+            NetCDFDataset.Dimensions datasetDimensions = dataset.getDimensions();
+            this.lats = datasetDimensions.getLatitudes();
+            this.lons = datasetDimensions.getLongitudes();
+            this.heights = datasetDimensions.getHeights();
         }
     }
 }

@@ -63,6 +63,11 @@ public class Main {
 
     public static void generateAllGbr4v2(Generator netCDFGenerator) throws IOException, InvalidRangeException {
         Main.generateGbr4v2(netCDFGenerator,
+                new DateTime(2014, 12, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2015, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_2014-12.nc"));
+
+        Main.generateGbr4v2(netCDFGenerator,
                 new DateTime(2018, 11, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2018, 12, 1, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/gbr4_2018-11.nc"));
@@ -108,7 +113,7 @@ public class Main {
         double[] depths = usedDepths;
 
 
-        NetCDFDataset dataset = new NetCDFDataset(lats, lons, depths);
+        NetCDFDataset dataset = new NetCDFDataset();
 
         NetCDFTimeDepthVariable tempVar = new NetCDFTimeDepthVariable("temp", "degrees C");
         dataset.addVariable(tempVar);
@@ -227,7 +232,7 @@ public class Main {
         float[] lats = getCoordinates(-50, 50, 100);
         float[] lons = getCoordinates(-50, 50, 100);
 
-        NetCDFDataset dataset = new NetCDFDataset(lats, lons);
+        NetCDFDataset dataset = new NetCDFDataset();
 
         NetCDFVariable botzVar = new NetCDFVariable("botz", "metre");
         dataset.addVariable(botzVar);
@@ -372,7 +377,7 @@ public class Main {
         int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
 
 
-        NetCDFDataset dataset = new NetCDFDataset(lats, lons, depths);
+        NetCDFDataset dataset = new NetCDFDataset();
 
         NetCDFTimeDepthVariable temp = new NetCDFTimeDepthVariable("temperature", "C");
         dataset.addVariable(temp);
@@ -448,7 +453,7 @@ public class Main {
         float[] lats0 = getCoordinates(-22, -10, 21);
         float[] lons0 = getCoordinates(142, 154, 21);
 
-        NetCDFDataset dataset0 = new NetCDFDataset(lats0, lons0);
+        NetCDFDataset dataset0 = new NetCDFDataset();
 
         NetCDFTimeVariable temp0 = new NetCDFTimeVariable("temperature", "C");
         dataset0.addVariable(temp0);
@@ -475,7 +480,7 @@ public class Main {
         float[] lats1 = getCoordinates(-24, -12, 21);
         float[] lons1 = getCoordinates(144, 156, 21);
 
-        NetCDFDataset dataset1 = new NetCDFDataset(lats1, lons1);
+        NetCDFDataset dataset1 = new NetCDFDataset();
 
         NetCDFTimeVariable temp1 = new NetCDFTimeVariable("temperature1", "C");
         dataset1.addVariable(temp1);
