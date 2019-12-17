@@ -110,6 +110,11 @@ public class Generator {
                 Bundle bundle = new Bundle(dataset);
                 bundleList.add(bundle);
 
+                // Set attributes
+                for (Map.Entry<String, String> attributeEntry : dataset.getGlobalAttributes().entrySet()) {
+                    writer.addGlobalAttribute(attributeEntry.getKey(), attributeEntry.getValue());
+                }
+
                 // Create a unique name for the dimensions / variables (to prevent clashes between hypercubes)
                 bundle.latVariableName = "lat";
                 bundle.lonVariableName = "lon";

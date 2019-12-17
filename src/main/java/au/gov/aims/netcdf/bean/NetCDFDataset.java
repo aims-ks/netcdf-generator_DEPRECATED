@@ -20,6 +20,7 @@ package au.gov.aims.netcdf.bean;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -29,10 +30,20 @@ import java.util.Set;
 public class NetCDFDataset implements Iterable<AbstractNetCDFVariable> {
     private List<AbstractNetCDFVariable> variables;
     private List<NetCDFVectorVariable> vectorVariables;
+    private Map<String, String> globalAttributes;
 
     public NetCDFDataset() {
         this.variables = new ArrayList<AbstractNetCDFVariable>();
         this.vectorVariables = new ArrayList<NetCDFVectorVariable>();
+        this.globalAttributes = new HashMap<String, String>();
+    }
+
+    public Map<String, String> getGlobalAttributes() {
+        return this.globalAttributes;
+    }
+
+    public void setGlobalAttribute(String key, String value) {
+        this.globalAttributes.put(key, value);
     }
 
     // Return a Dimensions instance containing all used lat, lon and heights.

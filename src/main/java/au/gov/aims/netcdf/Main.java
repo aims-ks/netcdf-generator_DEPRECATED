@@ -31,6 +31,7 @@ import ucar.ma2.InvalidRangeException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 /*
  * TODO
@@ -64,9 +65,10 @@ public class Main {
     public static void generateAllGbr4v2(Generator netCDFGenerator) throws IOException, InvalidRangeException {
         Main.generateGbr4v2(netCDFGenerator,
                 new DateTime(2014, 12, 1, 0, 0, TIMEZONE_BRISBANE),
-                new DateTime(2015, 1, 1, 0, 0, TIMEZONE_BRISBANE),
-                new File("/tmp/gbr4_2014-12.nc"));
+                new DateTime(2014, 12, 2, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_2014-12-01.nc"));
 
+/*
         Main.generateGbr4v2(netCDFGenerator,
                 new DateTime(2018, 11, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2018, 12, 1, 0, 0, TIMEZONE_BRISBANE),
@@ -96,13 +98,16 @@ public class Main {
                 new DateTime(2019, 4, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2019, 5, 1, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/gbr4_2019-04.nc"));
+*/
     }
 
 
 
     public static void generateGbr4v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
-        float[] lats = getCoordinates(-22, -10, 21); // y
-        float[] lons = getCoordinates(142, 154, 21); // x
+        Random rng = new Random(4280);
+
+        float[] lats = getCoordinates(-28, -7.6f, 15); // y
+        float[] lons = getCoordinates(142, 156, 10); // x
 
         // List of all depths found in GBR4 v2 files
         double[] allDepths = {-3890, -3680, -3480, -3280, -3080, -2880, -2680, -2480, -2280, -2080, -1880, -1680, -1480, -1295, -1135, -990, -865, -755, -655, -570, -495, -430, -370, -315, -270, -235, -200, -170, -145, -120, -103, -88, -73, -60, -49, -39.5, -31, -23.75, -17.75, -12.75, -8.8, -5.55, -3, -1.5, -0.5, 0.5, 1.5};
@@ -114,22 +119,31 @@ public class Main {
 
 
         NetCDFDataset dataset = new NetCDFDataset();
+        dataset.setGlobalAttribute("metadata_link", "http://marlin.csiro.au/geonetwork/srv/eng/search?&uuid=72020224-f086-434a-bbe9-a222c8e5cf0d");
+        dataset.setGlobalAttribute("title", "GBR4 Hydro");
+        dataset.setGlobalAttribute("paramhead", "GBR 4km resolution grid");
 
         NetCDFTimeDepthVariable tempVar = new NetCDFTimeDepthVariable("temp", "degrees C");
+        tempVar.setAttribute("long_name", "Temperature");
         dataset.addVariable(tempVar);
 
         NetCDFTimeDepthVariable saltVar = new NetCDFTimeDepthVariable("salt", "PSU");
+        saltVar.setAttribute("long_name", "Salinity");
         dataset.addVariable(saltVar);
 
         //NetCDFTimeDepthVariable RT_exposeVar = new NetCDFTimeDepthVariable("RT_expose", "DegC week");
         //dataset.addVariable(RT_exposeVar);
 
         NetCDFTimeVariable wspeed_uVar = new NetCDFTimeVariable("wspeed_u", "ms-1");
+        wspeed_uVar.setAttribute("long_name", "eastward_wind");
         NetCDFTimeVariable wspeed_vVar = new NetCDFTimeVariable("wspeed_v", "ms-1");
+        wspeed_vVar.setAttribute("long_name", "northward_wind");
         dataset.addVectorVariable(new NetCDFVectorVariable<NetCDFTimeVariable>("wind", wspeed_uVar, wspeed_vVar));
 
         NetCDFTimeDepthVariable uVar = new NetCDFTimeDepthVariable("u", "ms-1");
+        uVar.setAttribute("long_name", "Eastward current");
         NetCDFTimeDepthVariable vVar = new NetCDFTimeDepthVariable("v", "ms-1");
+        vVar.setAttribute("long_name", "Northward current");
         dataset.addVectorVariable(new NetCDFVectorVariable<NetCDFTimeDepthVariable>("sea_water_velocity", uVar, vVar));
 
         //NetCDFTimeDepthVariable dhwVar = new NetCDFTimeDepthVariable("dhw", "DegC-week");
@@ -142,6 +156,7 @@ public class Main {
         //dataset.addVariable(temp_exposeVar);
 
         NetCDFVariable botzVar = new NetCDFVariable("botz", "metre");
+        botzVar.setAttribute("long_name", "Depth of sea-bed");
         dataset.addVariable(botzVar);
 
 
@@ -158,8 +173,8 @@ public class Main {
                     // Set data for NetCDFTimeVariable
 
                     // Wind
-                    double windUValue = Main.drawLinearGradient(lat, lon - hour, -10, -8, 100, 70, 0);
-                    double windVValue = Main.drawLinearGradient(lat - hour, lon, 2, 17, 50, -20, 0);
+                    double windUValue = Main.drawLinearGradient(rng, lat, lon - hour, -10, -8, 100, 70, 0);
+                    double windVValue = Main.drawLinearGradient(rng, lat - hour, lon, 2, 17, 50, -20, 0);
                     wspeed_uVar.addDataPoint(lat, lon, frameDate, windUValue);
                     wspeed_vVar.addDataPoint(lat, lon, frameDate, windVValue);
 
@@ -167,18 +182,18 @@ public class Main {
                         // Set data for NetCDFTimeDepthVariable
 
                         // Temperature
-                        double worldTempValue = Main.drawLinearGradient(lat+45, lon, 0, 30, 180, 0, (-depth + 2) / 5000); // Hot at the equator, cold at the poles
-                        double qldTempValue = Main.drawLinearGradient(lat, lon+31, -4, 4, 20, 60, (-depth + 2) / 5000); // Hotter closer to the coastline
+                        double worldTempValue = Main.drawLinearGradient(rng, lat+45, lon, 0, 30, 180, 0, (-depth + 2) / 5000); // Hot at the equator, cold at the poles
+                        double qldTempValue = Main.drawLinearGradient(rng, lat, lon+31, -4, 4, 20, 60, (-depth + 2) / 5000); // Hotter closer to the coastline
                         double dayNight = (Math.abs((hour + 12) % 24 - 12) - 6) / 4.0; // Temperature varies +/- 1 degree between day and night
                         tempVar.addDataPoint(lat, lon, frameDate, depth, worldTempValue + qldTempValue + dayNight + depth/10);
 
                         // Salt
-                        double saltValue = Main.drawRadialGradient(lat+(hour/4.0f), lon-(hour/4.0f), 32, 36, 10, (-depth + 2) / 5000);
+                        double saltValue = Main.drawRadialGradient(rng, lat+(hour/4.0f), lon-(hour/4.0f), 32, 36, 10, (-depth + 2) / 5000);
                         saltVar.addDataPoint(lat, lon, frameDate, depth, saltValue);
 
                         // Current
-                        double currentUValue = Main.drawRadialGradient(lat-(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
-                        double currentVValue = Main.drawRadialGradient(lat+(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
+                        double currentUValue = Main.drawRadialGradient(rng, lat-(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
+                        double currentVValue = Main.drawRadialGradient(rng, lat+(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
                         uVar.addDataPoint(lat, lon, frameDate, depth, currentUValue);
                         vVar.addDataPoint(lat, lon, frameDate, depth, currentVValue);
                     }
@@ -193,6 +208,8 @@ public class Main {
 
 
     public static void generateGbr1v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        Random rng = new Random(9833);
+
         float[] lats = getCoordinates(-22, -10, 21);
         float[] lons = getCoordinates(142, 154, 21);
 
@@ -206,6 +223,8 @@ public class Main {
     }
 
     public static void generateGbr4bgc(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        Random rng = new Random(3958);
+
         float[] lats = getCoordinates(-22, -10, 21);
         float[] lons = getCoordinates(142, 154, 21);
 
@@ -229,6 +248,8 @@ public class Main {
      * @throws InvalidRangeException
      */
     public static void generateTest(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        Random rng = new Random(6930);
+
         float[] lats = getCoordinates(-50, 50, 100);
         float[] lons = getCoordinates(-50, 50, 100);
 
@@ -260,14 +281,14 @@ public class Main {
                 for (int hour=0; hour<nbHours; hour++) {
                     DateTime frameDate = startDate.plusHours(hour);
 
-                    double testLinearGradientValue = Main.drawLinearGradient(lat, lon, 0, 10, 50, hour * (360.0/nbHours), 0);
+                    double testLinearGradientValue = Main.drawLinearGradient(rng, lat, lon, 0, 10, 50, hour * (360.0/nbHours), 0);
                     testLinearGradient.addDataPoint(lat, lon, frameDate, testLinearGradientValue);
 
-                    double testRadialGradientValue = Main.drawRadialGradient(lat, lon, -10, 2, 50, Math.abs(Math.abs(hour-nbHours/2.0)-nbHours/2.0) * 0.01);
+                    double testRadialGradientValue = Main.drawRadialGradient(rng, lat, lon, -10, 2, 50, Math.abs(Math.abs(hour-nbHours/2.0)-nbHours/2.0) * 0.01);
                     testRadialGradient.addDataPoint(lat, lon, frameDate, testRadialGradientValue);
 
-                    double testWaveUValue = Main.drawLinearGradient(lat, lon - hour, -4, 0, 100, 70, 0);;
-                    double testWaveVValue = Main.drawLinearGradient(lat - hour, lon, 2, 10, 50, -20, 0);
+                    double testWaveUValue = Main.drawLinearGradient(rng, lat, lon - hour, -4, 0, 100, 70, 0);;
+                    double testWaveVValue = Main.drawLinearGradient(rng, lat - hour, lon, 2, 10, 50, -20, 0);
                     testWaveU.addDataPoint(lat, lon, frameDate, testWaveUValue);
                     testWaveV.addDataPoint(lat, lon, frameDate, testWaveVValue);
                 }
@@ -276,8 +297,6 @@ public class Main {
 
         netCDFGenerator.generate(outputFile, dataset);
     }
-
-
 
     public static float[] getCoordinates(float min, float max, int steps) {
         float[] coordinates = new float[steps];
@@ -291,6 +310,7 @@ public class Main {
 
     /**
      * Create data that shows as a linear gradient, at a given angle
+     * @param rng Random number generator
      * @param lat Latitude coordinate, in degree
      * @param lon Longitude coordinate, in degree
      * @param min Minimum output value
@@ -300,9 +320,9 @@ public class Main {
      * @param noise Level of noise, between [0, 1]
      * @return A value between [min, max] for the given coordinate.
      */
-    public static double drawLinearGradient(float lat, float lon, double min, double max, double frequency, double angle, double noise) {
-        double noisyLat = lat + (Math.random() - 0.5) * 90 * noise;
-        double noisyLon = lon + (Math.random() - 0.5) * 90 * noise;
+    public static double drawLinearGradient(Random rng, float lat, float lon, double min, double max, double frequency, double angle, double noise) {
+        double noisyLat = lat + (rng.nextDouble() - 0.5) * 90 * noise;
+        double noisyLon = lon + (rng.nextDouble() - 0.5) * 90 * noise;
 
         double radianAngle = Math.toRadians(angle);
 
@@ -321,6 +341,7 @@ public class Main {
 
     /**
      * Create data that shows as a radial gradient, with a given diameter
+     * @param rng Random number generator
      * @param lat Latitude coordinate, in degree
      * @param lon Longitude coordinate, in degree
      * @param min Minimum output value
@@ -329,9 +350,9 @@ public class Main {
      * @param noise Level of noise, between [0, 1]
      * @return A value between [min, max] for the given coordinate.
      */
-    public static double drawRadialGradient(float lat, float lon, double min, double max, double diameter, double noise) {
-        double noisyLat = lat + (Math.random() - 0.5) * 90 * noise;
-        double noisyLon = lon + (Math.random() - 0.5) * 90 * noise;
+    public static double drawRadialGradient(Random rng, float lat, float lon, double min, double max, double diameter, double noise) {
+        double noisyLat = lat + (rng.nextDouble() - 0.5) * 90 * noise;
+        double noisyLon = lon + (rng.nextDouble() - 0.5) * 90 * noise;
 
         // Value between [-2, 2]
         double trigoValue = Math.cos(2 * Math.PI * noisyLat / diameter) + Math.sin(2 * Math.PI * noisyLon / diameter);
@@ -369,6 +390,8 @@ public class Main {
      * @throws InvalidRangeException
      */
     public static void generateGbrRaindow(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        Random rng = new Random(6851);
+
         float[] lats = getCoordinates(-22, -10, 21);
         float[] lons = getCoordinates(142, 154, 21);
 
@@ -414,7 +437,7 @@ public class Main {
                             temp.addDataPoint(lat, lon, frameDate, depth, tempValue);
 
                             // Noise - Deeper = less noise
-                            double noiseValue = Math.abs((hour - lat + lon + Math.random() * (6 + depth/2)) % (40 + depth) - (40 + depth)/2);
+                            double noiseValue = Math.abs((hour - lat + lon + rng.nextDouble() * (6 + depth/2)) % (40 + depth) - (40 + depth)/2);
                             noise.addDataPoint(lat, lon, frameDate, depth, noiseValue);
 
                             // Current
@@ -447,6 +470,8 @@ public class Main {
 
 
     public static void generateMultiHypercube(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        Random rng = new Random(5610);
+
         int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
         int hourOffset = 3; // Number of hours to offset the second data hypercube
 
@@ -470,7 +495,7 @@ public class Main {
                     temp0.addDataPoint(lat, lon, frameDate, tempValue);
 
                     // Salt contains holes in the data
-                    double saltValue = hour + (lat+22) + (-lon+154) + Math.random() * 10;
+                    double saltValue = hour + (lat+22) + (-lon+154) + rng.nextDouble() * 10;
                     salt0.addDataPoint(lat, lon, frameDate, saltValue);
                 }
             }
