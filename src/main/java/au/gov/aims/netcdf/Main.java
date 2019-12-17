@@ -41,7 +41,7 @@ import java.util.Random;
  * [X] Add depth support
  * [X] Add vector variable support
  *
- * [ ] Create NetCDF files and re-write NcAnimate tests
+ * [~] Create NetCDF files and re-write NcAnimate tests
  *
  * NetCDF file samples:
  *     https://www.unidata.ucar.edu/software/netcdf/examples/files.html
@@ -66,7 +66,12 @@ public class Main {
         Main.generateGbr4v2(netCDFGenerator,
                 new DateTime(2014, 12, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2014, 12, 2, 0, 0, TIMEZONE_BRISBANE),
-                new File("/tmp/gbr4_2014-12-01.nc"));
+                new File("/tmp/gbr4_v2_2014-12-01.nc"), false);
+
+        Main.generateGbr4v2(netCDFGenerator,
+                new DateTime(2014, 12, 2, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2014, 12, 3, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_v2_2014-12-02_missingFrames.nc"), true);
 
 /*
         Main.generateGbr4v2(netCDFGenerator,
@@ -103,7 +108,7 @@ public class Main {
 
 
 
-    public static void generateGbr4v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+    public static void generateGbr4v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile, boolean missingData) throws IOException, InvalidRangeException {
         Random rng = new Random(4280);
 
         float[] lats = getCoordinates(-28, -7.6f, 15); // y
@@ -170,32 +175,65 @@ public class Main {
                 for (int hour=0; hour<nbHours; hour++) {
                     DateTime frameDate = startDate.plusHours(hour);
 
+                    // Skip some frames (if needed)
+                    // NOTE: Skipped frames were chosen to highlight different scenarios, verified in tests.
+                    boolean skipTemp = false;
+                    boolean skipWind = false;
+                    boolean skipSalt = false;
+                    boolean skipCurrent = false;
+                    if (missingData) {
+                        if (hour == 2 || hour == 3) {
+                            continue;
+                        }
+
+                        if (hour == 5) {
+                            skipTemp = true;
+                        }
+                        if (hour == 1) {
+                            skipWind = true;
+                        }
+                        if (hour == 7 || hour == 8) {
+                            skipSalt = true;
+                        }
+                        if (hour == 8 || hour == 9) {
+                            skipCurrent = true;
+                        }
+                    }
+
                     // Set data for NetCDFTimeVariable
 
                     // Wind
-                    double windUValue = Main.drawLinearGradient(rng, lat, lon - hour, -10, -8, 100, 70, 0);
-                    double windVValue = Main.drawLinearGradient(rng, lat - hour, lon, 2, 17, 50, -20, 0);
-                    wspeed_uVar.addDataPoint(lat, lon, frameDate, windUValue);
-                    wspeed_vVar.addDataPoint(lat, lon, frameDate, windVValue);
+                    if (!skipWind) {
+                        double windUValue = Main.drawLinearGradient(rng, lat, lon - hour, -10, -8, 100, 70, 0);
+                        double windVValue = Main.drawLinearGradient(rng, lat - hour, lon, 2, 17, 50, -20, 0);
+                        wspeed_uVar.addDataPoint(lat, lon, frameDate, windUValue);
+                        wspeed_vVar.addDataPoint(lat, lon, frameDate, windVValue);
+                    }
 
                     for (double depth : depths) {
                         // Set data for NetCDFTimeDepthVariable
 
                         // Temperature
-                        double worldTempValue = Main.drawLinearGradient(rng, lat+45, lon, 0, 30, 180, 0, (-depth + 2) / 5000); // Hot at the equator, cold at the poles
-                        double qldTempValue = Main.drawLinearGradient(rng, lat, lon+31, -4, 4, 20, 60, (-depth + 2) / 5000); // Hotter closer to the coastline
-                        double dayNight = (Math.abs((hour + 12) % 24 - 12) - 6) / 4.0; // Temperature varies +/- 1 degree between day and night
-                        tempVar.addDataPoint(lat, lon, frameDate, depth, worldTempValue + qldTempValue + dayNight + depth/10);
+                        if (!skipTemp) {
+                            double worldTempValue = Main.drawLinearGradient(rng, lat+45, lon, 0, 30, 180, 0, (-depth + 2) / 5000); // Hot at the equator, cold at the poles
+                            double qldTempValue = Main.drawLinearGradient(rng, lat, lon+31, -4, 4, 20, 60, (-depth + 2) / 5000); // Hotter closer to the coastline
+                            double dayNight = (Math.abs((hour + 12) % 24 - 12) - 6) / 4.0; // Temperature varies +/- 1 degree between day and night
+                            tempVar.addDataPoint(lat, lon, frameDate, depth, worldTempValue + qldTempValue + dayNight + depth/10);
+                        }
 
                         // Salt
-                        double saltValue = Main.drawRadialGradient(rng, lat+(hour/4.0f), lon-(hour/4.0f), 32, 36, 10, (-depth + 2) / 5000);
-                        saltVar.addDataPoint(lat, lon, frameDate, depth, saltValue);
+                        if (!skipSalt) {
+                            double saltValue = Main.drawRadialGradient(rng, lat+(hour/4.0f), lon-(hour/4.0f), 32, 36, 10, (-depth + 2) / 5000);
+                            saltVar.addDataPoint(lat, lon, frameDate, depth, saltValue);
+                        }
 
                         // Current
-                        double currentUValue = Main.drawRadialGradient(rng, lat-(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
-                        double currentVValue = Main.drawRadialGradient(rng, lat+(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
-                        uVar.addDataPoint(lat, lon, frameDate, depth, currentUValue);
-                        vVar.addDataPoint(lat, lon, frameDate, depth, currentVValue);
+                        if (!skipCurrent) {
+                            double currentUValue = Main.drawRadialGradient(rng, lat-(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
+                            double currentVValue = Main.drawRadialGradient(rng, lat+(hour/4.0f), lon+(hour/4.0f), -0.6, 0.6, 15, (-depth + 2) / 5000);
+                            uVar.addDataPoint(lat, lon, frameDate, depth, currentUValue);
+                            vVar.addDataPoint(lat, lon, frameDate, depth, currentVValue);
+                        }
                     }
                 }
             }
@@ -203,7 +241,6 @@ public class Main {
 
         netCDFGenerator.generate(outputFile, dataset);
     }
-
 
 
 
