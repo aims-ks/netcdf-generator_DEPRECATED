@@ -218,12 +218,13 @@ public class Main {
     public static void generateGbr4v2MultiHypercubes(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
         Random rng = new Random(5610);
 
-        float[] lats0 = getCoordinates(-28, -7.6f, 15); // y
-        float[] lons0 = getCoordinates(142, 156, 10); // x
+        float[] lats0 = getCoordinates(-26, -7.6f, 15); // y
+        float[] lons0 = getCoordinates(142, 154, 10); // x
         double[] depths0 = {-1.5, -17.75, -49};
 
-        float[] lats1 = getCoordinates(-30, -9.6f, 30); // y
-        float[] lons1 = getCoordinates(144, 158, 20); // x
+        float[] lats1 = getCoordinates(-28, -9.6f, 30); // y
+        float[] lons1 = getCoordinates(144, 156, 20); // x
+
         double[] depths1 = {-2.35, -18, -50};
 
 
@@ -285,11 +286,11 @@ public class Main {
             }
         }
 
-        int nbHours1 = Hours.hoursBetween(startDate, endDate).getHours() / 3;
+        int nbHours1 = Hours.hoursBetween(startDate, endDate).getHours();
         for (float lat : lats1) {
             for (float lon : lons1) {
-                for (int hour=2; hour<nbHours1; hour++) {
-                    DateTime frameDate = startDate.plusHours(hour*3);
+                for (int hour=2; hour<nbHours1; hour+=3) {
+                    DateTime frameDate = startDate.plusHours(hour);
 
                     for (double depth : depths1) {
                         // Set data for NetCDFTimeDepthVariable
@@ -309,73 +310,6 @@ public class Main {
         }
 
         netCDFGenerator.generate(outputFile, dataset0, dataset1);
-
-/*
-
-
-
-
-
-
-        int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
-        int hourOffset = 3; // Number of hours to offset the second data hypercube
-
-        float[] lats0 = getCoordinates(-22, -10, 21);
-        float[] lons0 = getCoordinates(142, 154, 21);
-
-        NetCDFDataset dataset0 = new NetCDFDataset();
-
-        NetCDFTimeVariable temp0 = new NetCDFTimeVariable("temperature", "C");
-        dataset0.addVariable(temp0);
-
-        NetCDFTimeVariable salt0 = new NetCDFTimeVariable("salinity", "PSU");
-        dataset0.addVariable(salt0);
-
-        for (int hour=0; hour<nbHours; hour++) {
-            DateTime frameDate = startDate.plusHours(hour);
-
-            for (float lat : lats0) {
-                for (float lon : lons0) {
-                    double tempValue = Math.abs((hour + lat + lon) % 40 - 20) - 10;
-                    temp0.addDataPoint(lat, lon, frameDate, tempValue);
-
-                    // Salt contains holes in the data
-                    double saltValue = hour + (lat+22) + (-lon+154) + rng.nextDouble() * 10;
-                    salt0.addDataPoint(lat, lon, frameDate, saltValue);
-                }
-            }
-        }
-
-
-        float[] lats1 = getCoordinates(-24, -12, 21);
-        float[] lons1 = getCoordinates(144, 156, 21);
-
-        NetCDFDataset dataset1 = new NetCDFDataset();
-
-        NetCDFTimeVariable temp1 = new NetCDFTimeVariable("temperature1", "C");
-        dataset1.addVariable(temp1);
-
-        NetCDFTimeVariable salt1 = new NetCDFTimeVariable("salinity1", "PSU");
-        dataset1.addVariable(salt1);
-
-        for (int hour=hourOffset; hour<nbHours+hourOffset; hour+=3) {
-            DateTime frameDate = startDate.plusHours(hour);
-
-            for (float lat : lats1) {
-                for (float lon : lons1) {
-                    double tempValue = Math.abs((hour + lat + lon) % 40 - 20) - 10;
-                    temp1.addDataPoint(lat, lon, frameDate, tempValue);
-
-                    // Salt contains holes in the data
-                    double saltValue = hour + (lat+22) + (-lon+154);
-                    salt1.addDataPoint(lat, lon, frameDate, saltValue);
-                }
-            }
-        }
-
-
-        netCDFGenerator.generate(outputFile, dataset0, dataset1);
-*/
     }
 
 
