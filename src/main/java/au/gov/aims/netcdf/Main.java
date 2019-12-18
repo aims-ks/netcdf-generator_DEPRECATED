@@ -54,20 +54,15 @@ public class Main {
     public static void main(String ... args) throws Exception {
         Generator netCDFGenerator = new Generator();
 
+
+        // Test file
         Main.generateTest(netCDFGenerator,
                 new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2019, 1, 3, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/test.nc"));
 
-        Main.generateAllGbr4v2(netCDFGenerator);
 
-        Main.generateGbr4v2MultiHypercubes(netCDFGenerator,
-                new DateTime(2000, 1, 1, 0, 0, TIMEZONE_BRISBANE),
-                new DateTime(2000, 1, 2, 0, 0, TIMEZONE_BRISBANE),
-                new File("/tmp/gbr4_v2_2000-01-01_multiHypercubes.nc"));
-    }
-
-    public static void generateAllGbr4v2(Generator netCDFGenerator) throws IOException, InvalidRangeException {
+        // GBR4 Hydro v2
         Main.generateGbr4v2(netCDFGenerator,
                 new DateTime(2014, 12, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2014, 12, 2, 0, 0, TIMEZONE_BRISBANE),
@@ -77,8 +72,21 @@ public class Main {
                 new DateTime(2014, 12, 2, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2014, 12, 3, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/gbr4_v2_2014-12-02_missingFrames.nc"), true);
-    }
 
+
+        // Multi-hypercubes of data
+        Main.generateGbr4v2MultiHypercubes(netCDFGenerator,
+                new DateTime(2000, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2000, 1, 2, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_v2_2000-01-01_multiHypercubes.nc"));
+
+
+        // GBR4 BGC
+        Main.generateGbr4bgc(netCDFGenerator,
+                new DateTime(2014, 12, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2015, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_bgc_2014-12.nc"));
+    }
 
 
     public static void generateGbr4v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile, boolean missingData) throws IOException, InvalidRangeException {
@@ -312,35 +320,94 @@ public class Main {
         netCDFGenerator.generate(outputFile, dataset0, dataset1);
     }
 
-
-
-
-    public static void generateGbr1v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
-        Random rng = new Random(9833);
-
-        float[] lats = getCoordinates(-22, -10, 21);
-        float[] lons = getCoordinates(142, 154, 21);
-
-        // List of all depths found in GBR1 2.0 files
-        double[] allDepths = {-3885, -3660, -3430, -3195, -2965, -2730, -2495, -2265, -2035, -1805, -1575, -1345, -1115, -960, -860, -750, -655, -570, -495, -430, -370, -315, -270, -230, -195, -165, -140, -120, -103, -88, -73, -60, -49, -39.5, -31, -24, -18, -13, -9, -5.35, -2.35, -0.5, 0.5, 1.5};
-
-        // List of depths used in configs
-        double[] usedDepths = {-2.35, -5.35, -18};
-
-        double[] depths = usedDepths;
-    }
-
+    /**
+     * Daily data
+     * @param netCDFGenerator
+     * @param startDate
+     * @param endDate
+     * @param outputFile
+     * @throws IOException
+     * @throws InvalidRangeException
+     */
     public static void generateGbr4bgc(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
         Random rng = new Random(3958);
 
-        float[] lats = getCoordinates(-22, -10, 21);
-        float[] lons = getCoordinates(142, 154, 21);
+        float[] lats = getCoordinates(-28, -7.6f, 15); // y
+        float[] lons = getCoordinates(142, 156, 10); // x
 
         // List of all depths found in GBR4 BGC files
         double[] allDepths = {-3890, -3680, -3480, -3280, -3080, -2880, -2680, -2480, -2280, -2080, -1880, -1680, -1480, -1295, -1135, -990, -865, -755, -655, -570, -495, -430, -370, -315, -270, -235, -200, -170, -145, -120, -103, -88, -73, -60, -49, -39.5, -31, -23.75, -17.75, -12.75, -8.8, -5.55, -3, -1.5, -0.5, 0.5, 1.5};
 
         // List of depths used in configs
         double[] usedDepths = {-1.5};
+
+        double[] depths = usedDepths;
+
+
+        NetCDFDataset dataset = new NetCDFDataset();
+        dataset.setGlobalAttribute("title", "GBR4 BGC (Spectral) Transport");
+        dataset.setGlobalAttribute("paramhead", "GBR 4km resolution grid");
+
+        // True colour variables
+        NetCDFTimeVariable r470Var = new NetCDFTimeVariable("R_470", "sr-1");
+        r470Var.setAttribute("long_name", "Rrs_470 nm");
+        dataset.addVariable(r470Var);
+
+        NetCDFTimeVariable r555Var = new NetCDFTimeVariable("R_555", "sr-1");
+        r555Var.setAttribute("long_name", "Rrs_555 nm");
+        dataset.addVariable(r555Var);
+
+        NetCDFTimeVariable r645Var = new NetCDFTimeVariable("R_645", "sr-1");
+        r645Var.setAttribute("long_name", "Rrs_645 nm");
+        dataset.addVariable(r645Var);
+
+
+        int nbHours = Hours.hoursBetween(startDate, endDate).getHours();
+        for (float lat : lats) {
+            for (float lon : lons) {
+                for (int hour=0; hour<nbHours; hour+=24) {
+                    DateTime frameDate = startDate.plusHours(hour);
+
+                    // Set data for NetCDFTimeVariable
+
+                    // True colour variables
+                    // NOTE: The colour turned out to be quite good with those ratios:
+                    //     Blue wavelength goes deep:                  values [0, 1]
+                    //     Green penetrate about half as deep as blue: values [0, 0.5]
+                    //     Red get pretty much all absorb:             values [0, 0.1]
+                    double r470Value = Main.drawLinearGradient(rng, lat, lon+102, 0, 1, 360, 90, 0.05); // Violet (used for Blue)
+                    double r555Value = Main.drawLinearGradient(rng, lat, lon+102, 0, 0.5, 360, 90, 0.05); // Green
+                    double r645Value = Main.drawLinearGradient(rng, lat, lon+102, 0, 0.1, 360, 90, 0.05); // Red
+                    r470Var.addDataPoint(lat, lon, frameDate, r470Value);
+                    r555Var.addDataPoint(lat, lon, frameDate, r555Value);
+                    r645Var.addDataPoint(lat, lon, frameDate, r645Value);
+
+                    for (double depth : depths) {
+                        // Set data for NetCDFTimeDepthVariable
+
+                        // TODO
+                    }
+                }
+            }
+        }
+
+        netCDFGenerator.generate(outputFile, dataset);
+    }
+
+
+
+
+    public static void generateGbr1v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+        Random rng = new Random(9833);
+
+        float[] lats = getCoordinates(-28, -7.6f, 30); // y
+        float[] lons = getCoordinates(142, 156, 20); // x
+
+        // List of all depths found in GBR1 2.0 files
+        double[] allDepths = {-3885, -3660, -3430, -3195, -2965, -2730, -2495, -2265, -2035, -1805, -1575, -1345, -1115, -960, -860, -750, -655, -570, -495, -430, -370, -315, -270, -230, -195, -165, -140, -120, -103, -88, -73, -60, -49, -39.5, -31, -24, -18, -13, -9, -5.35, -2.35, -0.5, 0.5, 1.5};
+
+        // List of depths used in configs
+        double[] usedDepths = {-2.35, -5.35, -18};
 
         double[] depths = usedDepths;
     }
