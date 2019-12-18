@@ -79,7 +79,7 @@ public class Generator {
     private static final Double NULL_VALUE = Double.NaN;
 
     // The date represented by time = 0, in NetCDF files
-    private static final DateTime NETCDF_EPOCH = new DateTime(1990, 1, 1, 0, 0, DateTimeZone.UTC);
+    public static final DateTime NETCDF_EPOCH = new DateTime(1990, 1, 1, 0, 0, DateTimeZone.UTC);
 
     /**
      * Generate a NetCDF file containing at least one data hypercube
