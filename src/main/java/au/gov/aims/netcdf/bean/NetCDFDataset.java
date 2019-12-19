@@ -18,6 +18,9 @@
  */
 package au.gov.aims.netcdf.bean;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,10 +35,29 @@ public class NetCDFDataset implements Iterable<AbstractNetCDFVariable> {
     private List<NetCDFVectorVariable> vectorVariables;
     private Map<String, String> globalAttributes;
 
+    // The date represented by time = 0, in NetCDF file
+    private String timeUnit;
+    private DateTime timeEpoch;
+
     public NetCDFDataset() {
         this.variables = new ArrayList<AbstractNetCDFVariable>();
         this.vectorVariables = new ArrayList<NetCDFVectorVariable>();
         this.globalAttributes = new HashMap<String, String>();
+        this.timeUnit = "hours since 1990-01-01";
+        this.timeEpoch = new DateTime(1990, 1, 1, 0, 0, DateTimeZone.UTC);
+    }
+
+    public String getTimeUnit() {
+        return this.timeUnit;
+    }
+
+    public DateTime getTimeEpoch() {
+        return this.timeEpoch;
+    }
+
+    public void setTimeUnit(String timeUnit, DateTime timeEpoch) {
+        this.timeUnit = timeUnit;
+        this.timeEpoch = timeEpoch;
     }
 
     public Map<String, String> getGlobalAttributes() {

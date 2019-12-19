@@ -98,6 +98,14 @@ public class Main {
                 new DateTime(2014, 12, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2015, 1, 1, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/gbr4_bgc_2014-12.nc"));
+
+
+        // NOAA
+        Main.generateNoaa(netCDFGenerator,
+                new DateTime(2014, 12, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2015, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/multi_1.glo_30m.dp.201412.nc"),
+                new File("/tmp/multi_1.glo_30m.hs.201412.nc"));
     }
 
 
@@ -218,8 +226,8 @@ public class Main {
         dataset.addVariable(botzVar);
 
 
-        int startHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, startDate).getHours();
-        int endHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, endDate).getHours();
+        int startHour = Hours.hoursBetween(dataset.getTimeEpoch(), startDate).getHours();
+        int endHour = Hours.hoursBetween(dataset.getTimeEpoch(), endDate).getHours();
         for (float lat : lats) {
             for (float lon : lons) {
                 // Set data for NetCDFVariable
@@ -227,7 +235,7 @@ public class Main {
                 botzVar.addDataPoint(lat, lon, botzValue);
 
                 for (int hour=startHour; hour<endHour; hour++) {
-                    DateTime frameDate = Generator.NETCDF_EPOCH.plusHours(hour);
+                    DateTime frameDate = dataset.getTimeEpoch().plusHours(hour);
 
                     // Skip some frames (if needed)
                     // NOTE: Skipped frames were chosen to highlight different scenarios, verified in tests.
@@ -341,8 +349,8 @@ public class Main {
         dataset.addVariable(botzVar);
 
 
-        int startHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, startDate).getHours();
-        int endHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, endDate).getHours();
+        int startHour = Hours.hoursBetween(dataset.getTimeEpoch(), startDate).getHours();
+        int endHour = Hours.hoursBetween(dataset.getTimeEpoch(), endDate).getHours();
         for (float lat : lats) {
             for (float lon : lons) {
                 // Set data for NetCDFVariable
@@ -350,7 +358,7 @@ public class Main {
                 botzVar.addDataPoint(lat, lon, botzValue);
 
                 for (int hour=startHour; hour<endHour; hour++) {
-                    DateTime frameDate = Generator.NETCDF_EPOCH.plusHours(hour);
+                    DateTime frameDate = dataset.getTimeEpoch().plusHours(hour);
 
                     // Set data for NetCDFTimeVariable
 
@@ -428,13 +436,12 @@ public class Main {
         dataset1.addVectorVariable(new NetCDFVectorVariable<NetCDFTimeDepthVariable>("sea_water_velocity", uVar, vVar));
 
 
-        int startHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, startDate).getHours();
-        int endHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, endDate).getHours();
-
+        int startHour0 = Hours.hoursBetween(dataset0.getTimeEpoch(), startDate).getHours();
+        int endHour0 = Hours.hoursBetween(dataset0.getTimeEpoch(), endDate).getHours();
         for (float lat : lats0) {
             for (float lon : lons0) {
-                for (int hour=startHour; hour<endHour; hour++) {
-                    DateTime frameDate = Generator.NETCDF_EPOCH.plusHours(hour);
+                for (int hour=startHour0; hour<endHour0; hour++) {
+                    DateTime frameDate = dataset0.getTimeEpoch().plusHours(hour);
 
                     // Set data for NetCDFTimeVariable
 
@@ -457,10 +464,12 @@ public class Main {
             }
         }
 
+        int startHour1 = Hours.hoursBetween(dataset1.getTimeEpoch(), startDate).getHours();
+        int endHour1 = Hours.hoursBetween(dataset1.getTimeEpoch(), endDate).getHours();
         for (float lat : lats1) {
             for (float lon : lons1) {
-                for (int hour=startHour+2; hour<endHour; hour+=3) {
-                    DateTime frameDate = Generator.NETCDF_EPOCH.plusHours(hour);
+                for (int hour=startHour1+2; hour<endHour1; hour+=3) {
+                    DateTime frameDate = dataset1.getTimeEpoch().plusHours(hour);
 
                     for (double depth : depths1) {
                         // Set data for NetCDFTimeDepthVariable
@@ -524,12 +533,12 @@ public class Main {
         dataset.addVariable(r645Var);
 
 
-        int startHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, startDate).getHours();
-        int endHour = Hours.hoursBetween(Generator.NETCDF_EPOCH, endDate).getHours();
+        int startHour = Hours.hoursBetween(dataset.getTimeEpoch(), startDate).getHours();
+        int endHour = Hours.hoursBetween(dataset.getTimeEpoch(), endDate).getHours();
         for (float lat : lats) {
             for (float lon : lons) {
                 for (int hour=startHour; hour<endHour; hour+=24) {
-                    DateTime frameDate = Generator.NETCDF_EPOCH.plusHours(hour);
+                    DateTime frameDate = dataset.getTimeEpoch().plusHours(hour);
 
                     // Set data for NetCDFTimeVariable
 
@@ -558,6 +567,55 @@ public class Main {
     }
 
 
+    public static void generateNoaa(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputWaveDirFile, File outputWaveHeightFile) throws IOException, InvalidRangeException {
+        Random rng = new Random(9584);
+
+        float[] lats = getCoordinates(-90, 0, 45); // y
+        float[] lons = getCoordinates(0, 180, 90); // x
+
+        String timeUnit = "Hour since " + startDate.toString();
+
+
+        // multi_1.glo_30m.dp.201412.grb2
+        NetCDFDataset waveDirDataset = new NetCDFDataset();
+        waveDirDataset.setTimeUnit(timeUnit, startDate);
+
+        NetCDFTimeVariable waveDirVar = new NetCDFTimeVariable("Primary_wave_direction_surface", "degree.true");
+        waveDirDataset.addVariable(waveDirVar);
+
+
+        // multi_1.glo_30m.hs.201412.grb2
+        NetCDFDataset waveHeightDataset = new NetCDFDataset();
+        waveHeightDataset.setTimeUnit(timeUnit, startDate);
+
+        NetCDFTimeVariable waveHeightVar = new NetCDFTimeVariable("Significant_height_of_combined_wind_waves_and_swell_surface", "m");
+        waveHeightDataset.addVariable(waveHeightVar);
+
+
+        int endHour = Hours.hoursBetween(startDate, endDate).getHours();
+        int hourOffset = Hours.hoursBetween(new DateTime(1990, 1, 1, 0, 0), startDate).getHours();
+        for (float lat : lats) {
+            for (float lon : lons) {
+                for (int hour=0; hour<endHour; hour+=3) {
+                    DateTime frameDate = startDate.plusHours(hour);
+
+                    // Set data for NetCDFTimeVariable
+
+                    // Wave direction: pointing towards Qld coastline (50 deg) with some random variations (+/-20 deg)
+                    // In NOAA datasets, 0 deg is pointing South (for some reason...)
+                    double waveDirValue = 50 + (rng.nextDouble() * 40 - 5);
+                    waveDirVar.addDataPoint(lat, lon, frameDate, waveDirValue);
+
+                    // Wave height varies between [0, 4] and moves up and down like the tides (sort of)
+                    double waveHeightValue = Main.drawLinearGradient(rng, lat, lon+(hourOffset+hour)/3.0f, 0, 4, 60, 70.0, 0.05);
+                    waveHeightVar.addDataPoint(lat, lon, frameDate, waveHeightValue);
+                }
+            }
+        }
+
+        netCDFGenerator.generate(outputWaveDirFile, waveDirDataset);
+        netCDFGenerator.generate(outputWaveHeightFile, waveHeightDataset);
+    }
 
 
     public static float[] getCoordinates(float min, float max, int steps) {

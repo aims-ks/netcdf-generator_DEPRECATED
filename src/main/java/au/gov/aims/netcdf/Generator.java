@@ -24,7 +24,6 @@ import au.gov.aims.netcdf.bean.NetCDFTimeDepthVariable;
 import au.gov.aims.netcdf.bean.NetCDFTimeVariable;
 import au.gov.aims.netcdf.bean.NetCDFVariable;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Hours;
 import ucar.ma2.Array;
 import ucar.ma2.ArrayDouble;
@@ -38,7 +37,6 @@ import ucar.nc2.Variable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,9 +75,6 @@ public class Generator {
     //     missing, as around an irregular region represented by a rectangular grid.
     //     http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_59.html
     private static final Double NULL_VALUE = Double.NaN;
-
-    // The date represented by time = 0, in NetCDF files
-    public static final DateTime NETCDF_EPOCH = new DateTime(1990, 1, 1, 0, 0, DateTimeZone.UTC);
 
     /**
      * Generate a NetCDF file containing at least one data hypercube
@@ -163,7 +158,7 @@ public class Generator {
                 List<Dimension> timeDimensions = new ArrayList<Dimension>();
                 timeDimensions.add(timeDimension);
                 writer.addVariable(bundle.timeVariableName, DataType.INT, timeDimensions);
-                writer.addVariableAttribute(bundle.timeVariableName, "units", "hours since 1990-01-01");
+                writer.addVariableAttribute(bundle.timeVariableName, "units", dataset.getTimeUnit());
                 writer.addVariableAttribute(bundle.timeVariableName, "_CoordinateAxisType", "Time");
 
                 if (bundle.heightDimension != null) {
@@ -236,7 +231,7 @@ public class Generator {
                     for (DateTime date : allDateTime) {
                         // Calculate the number of hours that elapsed since NetCDF epoch and the provided date
                         // (that's how dates are recorded in NetCDF files)
-                        int timeOffset = Hours.hoursBetween(NETCDF_EPOCH, date).getHours();
+                        int timeOffset = Hours.hoursBetween(bundle.dataset.getTimeEpoch(), date).getHours();
 
                         // Set the time data for the current record
                         timeData.setInt(timeIndex, timeOffset);
