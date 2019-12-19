@@ -52,9 +52,9 @@ public class GeneratorTest {
                 outputFile.canRead());
 
         Assert.assertTrue(String.format("The generated file is smaller than expected.%n" +
-            "Expected: %d%n" +
-            "Actual: %d%n" +
-            "File: %s",
+            "Expected: %9d%n" +
+            "Actual  : %9d%n" +
+            "File    : %s",
             expectedFileSize, outputFile.length(), outputFile),
             outputFile.length() > expectedFileSize);
 
