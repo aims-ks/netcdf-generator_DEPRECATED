@@ -300,7 +300,7 @@ public class Main {
         Random rng = new Random(9833);
 
         float[] lats = getCoordinates(-28, -7.6f, 30); // y
-        float[] lons = getCoordinates(142, 156, 20); // x
+        float[] lons = getCoordinates(142, 152, 14); // x
 
         // List of all depths found in GBR1 2.0 files
         double[] allDepths = {-3885, -3660, -3430, -3195, -2965, -2730, -2495, -2265, -2035, -1805, -1575, -1345, -1115, -960, -860, -750, -655, -570, -495, -430, -370, -315, -270, -230, -195, -165, -140, -120, -103, -88, -73, -60, -49, -39.5, -31, -24, -18, -13, -9, -5.35, -2.35, -0.5, 0.5, 1.5};
