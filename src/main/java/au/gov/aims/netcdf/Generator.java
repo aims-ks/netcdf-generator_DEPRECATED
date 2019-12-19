@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -323,6 +324,73 @@ public class Generator {
             writer.flush();
         }
     }
+
+    public static float[] getCoordinates(float min, float max, int steps) {
+        float[] coordinates = new float[steps];
+
+        for (int i=0; i<steps; i++) {
+            coordinates[i] = min + (max - min) * i / (steps - 1);
+        }
+
+        return coordinates;
+    }
+
+    /**
+     * Create data that shows as a linear gradient, at a given angle
+     * @param rng Random number generator
+     * @param lat Latitude coordinate, in degree
+     * @param lon Longitude coordinate, in degree
+     * @param min Minimum output value
+     * @param max Maximum output value
+     * @param frequency Distance between gradient, in lon / lat degree
+     * @param angle The angle of the gradient, in degree. 0 for horizontal, turning clockwise.
+     * @param noise Level of noise, between [0, 1]
+     * @return A value between [min, max] for the given coordinate.
+     */
+    public static double drawLinearGradient(Random rng, float lat, float lon, double min, double max, double frequency, double angle, double noise) {
+        double noisyLat = lat + (rng.nextDouble() - 0.5) * 90 * noise;
+        double noisyLon = lon + (rng.nextDouble() - 0.5) * 90 * noise;
+
+        double radianAngle = Math.toRadians(angle);
+
+        double latRatio = Math.cos(radianAngle);
+        double lonRatio = Math.sin(radianAngle);
+
+        // Value between [1, -1]
+        double trigoValue = Math.sin(2 * Math.PI * (noisyLat * latRatio + noisyLon * lonRatio) / frequency);
+
+        // Value between [0, 1]
+        double ratioValue = (trigoValue + 1) / 2;
+
+        // Value between [min, max]
+        return min + ratioValue * (max - min);
+    }
+
+    /**
+     * Create data that shows as a radial gradient, with a given diameter
+     * @param rng Random number generator
+     * @param lat Latitude coordinate, in degree
+     * @param lon Longitude coordinate, in degree
+     * @param min Minimum output value
+     * @param max Maximum output value
+     * @param diameter Diameter of the circles
+     * @param noise Level of noise, between [0, 1]
+     * @return A value between [min, max] for the given coordinate.
+     */
+    public static double drawRadialGradient(Random rng, float lat, float lon, double min, double max, double diameter, double noise) {
+        double noisyLat = lat + (rng.nextDouble() - 0.5) * 90 * noise;
+        double noisyLon = lon + (rng.nextDouble() - 0.5) * 90 * noise;
+
+        // Value between [-2, 2]
+        double trigoValue = Math.cos(2 * Math.PI * noisyLat / diameter) + Math.sin(2 * Math.PI * noisyLon / diameter);
+
+        // Value between [0, 1]
+        double ratioValue = (trigoValue + 2) / 4;
+
+        // Value between [min, max]
+        return min + ratioValue * (max - min);
+    }
+
 
     // Simple class to keep generation variables together
     private static class Bundle {
