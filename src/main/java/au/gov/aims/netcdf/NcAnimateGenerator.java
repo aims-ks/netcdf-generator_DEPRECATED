@@ -59,6 +59,12 @@ public class NcAnimateGenerator {
                 new DateTime(2014, 12, 3, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/gbr4_v2_2014-12-02_missingFrames.nc"), true);
 
+        // To be used as a replacement for small.nc
+        NcAnimateGenerator.generateGbr4v2(netCDFGenerator,
+                new DateTime(2010, 9, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2010, 9, 1, 2, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_v2_2010-09-01_00h00-02h00.nc"), true);
+
 
         // GBR1 Hydro v2
         NcAnimateGenerator.generateGbr1v2(netCDFGenerator,
