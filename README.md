@@ -7,7 +7,7 @@ Add info about tools to look at the file
 
 Info about connecting to the MongoDB
 
-1. Download the SSH key from the download database
+1. Download the SSH key from the password database
 
 2. Change SSH key access right to "400"
 

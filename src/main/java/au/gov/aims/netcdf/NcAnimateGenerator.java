@@ -59,6 +59,22 @@ public class NcAnimateGenerator {
                 new DateTime(2014, 12, 3, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/gbr4_v2_2014-12-02_missingFrames.nc"), true);
 
+        // For the DownloadManager
+        NcAnimateGenerator.generateGbr4v2(netCDFGenerator,
+                new DateTime(2018, 11, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2018, 11, 2, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_simple_2018-11.nc"), false);
+
+        NcAnimateGenerator.generateGbr4v2(netCDFGenerator,
+                new DateTime(2018, 12, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2018, 12, 2, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_simple_2018-12.nc"), false);
+
+        NcAnimateGenerator.generateGbr4v2(netCDFGenerator,
+                new DateTime(2019, 1, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2019, 1, 2, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_simple_2019-01.nc"), false);
+
         // To be used as a replacement for small.nc
         NcAnimateGenerator.generateGbr4v2(netCDFGenerator,
                 new DateTime(2010, 9, 1, 0, 0, TIMEZONE_BRISBANE),
