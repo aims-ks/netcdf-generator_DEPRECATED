@@ -35,6 +35,11 @@ public class DownloadManagerGenerator {
 
         // For the DownloadManager
         NcAnimateGenerator.generateGbr4v2(netCDFGenerator,
+                new DateTime(2018, 10, 1, 0, 0, TIMEZONE_BRISBANE),
+                new DateTime(2018, 10, 2, 0, 0, TIMEZONE_BRISBANE),
+                new File("/tmp/gbr4_simple_2018-10.nc"), false);
+
+        NcAnimateGenerator.generateGbr4v2(netCDFGenerator,
                 new DateTime(2018, 11, 1, 0, 0, TIMEZONE_BRISBANE),
                 new DateTime(2018, 11, 2, 0, 0, TIMEZONE_BRISBANE),
                 new File("/tmp/gbr4_simple_2018-11.nc"), false);
