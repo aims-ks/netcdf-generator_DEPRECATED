@@ -1,5 +1,5 @@
 TODO Add documentation about **ucar** documented standards (attributes starting with "_")
-and **edal** undocumented mess (regex on some attribute values).
+and **edal** undocumented mess (regex on some attribute values)
 
 Add info about tools to look at the file
 - Dive
