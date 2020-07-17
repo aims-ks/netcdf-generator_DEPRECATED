@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           apk update
-          apk add --no-cache libnetcdf15
+          apk add --no-cache libnetcdf-dev
 
       - name: Execute tests with Maven.
         env:
