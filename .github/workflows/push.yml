@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: maven:3.6-alpine
+      image: maven:3.12-alpine
 
     steps:
 
@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           apk update
-          apk add --no-cache libnetcdf-dev
+          apk add --no-cache netcdf-dev
 
       - name: Execute tests with Maven.
         env:
