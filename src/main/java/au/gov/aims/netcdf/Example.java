@@ -38,12 +38,12 @@ import java.util.List;
 
 /**
  * Example of NetCDF file creation, inspired from an Unidata example:
- *     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfWriting.html
+ *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/NetcdfWriting.html
  * Old example:
- *     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfFileWriteable.html
+ *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/NetcdfFileWriteable.html
  *
  * Java DOC:
- *     https://www.unidata.ucar.edu/software/netcdf-java/v4.3/v4.3/javadoc/ucar/nc2/NetcdfFileWriter.html
+ *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/javadoc/ucar/nc2/NetcdfFileWriter.html
  */
 public class Example implements Closeable {
     private static final NetcdfFileWriter.Version NETCDF_VERSION = NetcdfFileWriter.Version.netcdf4;

@@ -51,10 +51,10 @@ import java.util.TreeSet;
  * - Values are type Double
  *
  * Unidata example:
- *     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfWriting.html
+ *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/NetcdfWriting.html
  *
  * Java DOC:
- *     https://www.unidata.ucar.edu/software/netcdf-java/v4.3/v4.3/javadoc/ucar/nc2/NetcdfFileWriter.html
+ *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/javadoc/ucar/nc2/NetcdfFileWriter.html
  *
  * Source:
  *     https://github.com/Unidata/netcdf-java/tree/master/cdm/core/src/main/java/ucar
@@ -66,7 +66,7 @@ public class Generator {
     // NOTE: Null value can be set using attribute "_FillValue", "missing_value", etc,
     //     by adding the following line (for example) in the definition of the variable:
     //         writer.addVariableAttribute(variableName, "_FillValue", 9999);
-    //     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/NetcdfDataset.html
+    //     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/NetcdfDataset.html
     //     or simply using Double.NaN (as in eReefs NetCDF files).
     // "_FillValue", "missing_value" have different meanings:
     //     Sometimes there is need for more than one value to represent different kinds of missing data.
@@ -74,7 +74,7 @@ public class Generator {
     //     of missing data. For example, it might be appropriate to use _FillValue to mean that data that
     //     was expected never appeared, but missing_value where the creator of the data intends data to be
     //     missing, as around an irregular region represented by a rectangular grid.
-    //     http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_59.html
+    //     https://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_59.html
     private static final Double NULL_VALUE = Double.NaN;
 
     /**
@@ -140,8 +140,8 @@ public class Generator {
                 // Coordinate axis attributes.
                 //     It seems to work without them (except for the vertical azis).
                 //     I added them for all axis to follow the documentation.
-                //     https://www.unidata.ucar.edu/software/netcdf-java/current/reference/CoordinateAttributes.html
-                //     https://www.unidata.ucar.edu/software/netcdf-java/current/tutorial/CoordinateAttributes.html
+                //     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/reference/CoordinateAttributes.html
+                //     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/CoordinateAttributes.html
 
                 // Declare dimension variables (seams redundant, but it's required)
                 List<Dimension> latDimensions = new ArrayList<Dimension>();
