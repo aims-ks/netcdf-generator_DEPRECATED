@@ -86,11 +86,22 @@ public class NcAnimateGenerator {
                 new File("/tmp/multi_1.glo_30m.hs.201412.nc"));
     }
 
-    public static void generateGbr4v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile, boolean missingData) throws IOException, InvalidRangeException {
+    public static void generateGbr4v2(
+            Generator netCDFGenerator,
+            DateTime startDate,
+            DateTime endDate,
+            File outputFile,
+            boolean missingData) throws IOException, InvalidRangeException {
         NcAnimateGenerator.generateGbr4v2(netCDFGenerator, startDate, endDate, outputFile, missingData, 4280);
     }
 
-    public static void generateGbr4v2(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile, boolean missingData, long seed) throws IOException, InvalidRangeException {
+    public static void generateGbr4v2(
+            Generator netCDFGenerator,
+            DateTime startDate,
+            DateTime endDate,
+            File outputFile,
+            boolean missingData,
+            long seed) throws IOException, InvalidRangeException {
         Random rng = new Random(seed);
 
         float[] lats = Generator.getCoordinates(-28, -7.6f, 15); // y
@@ -488,7 +499,13 @@ public class NcAnimateGenerator {
     }
 
 
-    public static void generateNoaa(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputWaveDirFile, File outputWaveHeightFile) throws IOException, InvalidRangeException {
+    public static void generateNoaa(
+            Generator netCDFGenerator,
+            DateTime startDate,
+            DateTime endDate,
+            File outputWaveDirFile,
+            File outputWaveHeightFile) throws IOException, InvalidRangeException {
+
         Random rng = new Random(9584);
 
         float[] lats = Generator.getCoordinates(-90, 0, 45); // y

@@ -8,7 +8,9 @@
     <artifactId>netcdf-generator</artifactId>
     <version>0.1</version>
     <packaging>jar</packaging>
-    <description>This project was created to produce very small NetCDF files, to be used in unit test of projects like Ncanimate, without bloating the project size.</description>
+    <description>This project was created to produce very small NetCDF files,
+        to be used in unit tests of projects like NcAnimate,
+        without increasing the project size considerably.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

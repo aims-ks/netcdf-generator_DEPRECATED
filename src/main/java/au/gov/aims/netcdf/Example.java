@@ -18,10 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
-// NOTE: ucar.nc2.Structure only works with NetCDF 3
-
-
 /**
  * Example of NetCDF file creation, inspired from an Unidata example:
  *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/NetcdfWriting.html
@@ -30,6 +26,8 @@ import java.util.List;
  *
  * Java DOC:
  *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/javadoc/ucar/nc2/NetcdfFileWriter.html
+ *
+ * NOTE: We are not using ucar.nc2.Structure since it only works with NetCDF 3. We want to generate NetCDF 4.
  */
 public class Example implements Closeable {
     private static final NetcdfFileWriter.Version NETCDF_VERSION = NetcdfFileWriter.Version.netcdf4;
@@ -39,7 +37,7 @@ public class Example implements Closeable {
     public static void main(String ... args) throws Exception {
         File outputFile = new File("/tmp/example.nc");
         try (Example netCDFGenerator = new Example(outputFile)) {
-            //netCDFGenerator.generateGbrRaindow();
+            //netCDFGenerator.generateGbrRainbow();
             netCDFGenerator.generateWind();
         }
     }
@@ -77,7 +75,7 @@ public class Example implements Closeable {
         }
     }
 
-    public void generateGbrRaindow() throws IOException, InvalidRangeException {
+    public void generateGbrRainbow() throws IOException, InvalidRangeException {
         Dimension latDimension = this.writer.addDimension("lat", 3);
         Dimension lonDimension = this.writer.addDimension("lon", 4);
         Dimension timeDimension = this.writer.addUnlimitedDimension("time");
@@ -231,16 +229,17 @@ public class Example implements Closeable {
 
         this.writer.write(latVariable, Array.factory(DataType.FLOAT, new int [] {lats.length}, lats));
         this.writer.write(lonVariable, Array.factory(DataType.FLOAT, new int [] {lons.length}, lons));
-        // Do not write time dimension. It will get added "frame" by "frame"
+        // Do not write time dimension here, it's a "ongoing" (unlimited) dimension.
+        // It gets added "frame" by "frame", as new data gets added to the file.
 
         ArrayDouble.D3 windUData = new ArrayDouble.D3(1, latDimension.getLength(), lonDimension.getLength());
         ArrayDouble.D3 windVData = new ArrayDouble.D3(1, latDimension.getLength(), lonDimension.getLength());
 
         Array timeData = Array.factory(DataType.INT, new int[] {1});
 
-        // loop over each record
+        // Loop over each record
         for (int time=0; time<10; time++) {
-            // make up some data for this record, using different ways to fill the data arrays.
+            // Make up some data for this record, using different ways to fill the data arrays.
             timeData.setInt(timeData.getIndex(), time);
 
             for (int lat=0; lat<latDimension.getLength(); lat++) {

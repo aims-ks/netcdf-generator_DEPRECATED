@@ -1,40 +1,47 @@
-TODO Add documentation about **ucar** documented standards (attributes starting with "_")
-and **edal** undocumented mess (regex on some attribute values)
+This project can be used to generate very small NetCDF files, which can be included in projects to run unit tests.
 
-Add info about tools to look at the file
-- Dive
-- Panoply
+## Tools
 
-Info about connecting to the MongoDB
+NetCDF files can be viewed using different tools. The most convenient ones are:
+- [Panoply](https://www.giss.nasa.gov/tools/panoply/)
+- [Dive](http://software.cmar.csiro.au/www/en/software/dive.html)
 
-1. Download the SSH key from the password database
+**NOTE**: As of writing this documentation, CMAR have ceased to support the download link for **Dive**. 
+If you really want to use this tool, you can still find it on the
+[Web Archive](https://web.archive.org/web/20170314023923/http://software.cmar.csiro.au/www/en/software/dive.html).
 
-2. Change SSH key access right to "400"
+## NetCDF variable naming conventions
 
-3. Get the server IP from AWS
+If you want to create your own NetCDF file, you may be interested in the following resources.
 
-4. Connect to the server using the SSH key
+- [NetCDF naming convention for `long-name` and `standard-name`](https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/ch02s03.html)
+- [Table of common NetCDF `standard-name`](https://cfconventions.org/Data/cf-standard-names/77/build/cf-standard-name-table.html)
 
-    ```$ ssh -i ereefs-tunnel.pem ec2-user@52.62.64.114```
+Some metadata information is hidden in unrelated attributes. Just have a look at the EDAL library source code
+to see how `standard_name` and `long_name` can be used to infer metadata on the component variables of a vector variable.
 
-5. Connect to the MongoDB docker image
-
-    ```$ docker exec -it mongodb bash```
-
-6. Find the username / password of the database from
-
-    *AWS Systems Manager > Application Management > Parameter Store*
-
-7. Connect to the database:
-    ```
-    $ mongo -u admin -p
-    MongoDB shell version v4.2.3
-    Enter password:
-    ```
-
-8. Connect to the eReefs database
-    ```
-    > use ereefs
-    switched to db ereefs
-    > help
-    ```
+Package: uk.ac.rdg.resc.edal.dataset.cdm  
+Class: CdmDatasetFactory  
+Source code:
+```
+private IdComponentEastNorth determineVectorIdAndComponent(String stdName) {
+    if (stdName.contains("eastward_")) {
+        return new IdComponentEastNorth(stdName.replaceFirst("eastward_", ""), true, true);
+    } else if (stdName.contains("northward_")) {
+        return new IdComponentEastNorth(stdName.replaceFirst("northward_", ""), false, true);
+    } else if (stdName.matches("u-.*component")) {
+        return new IdComponentEastNorth(stdName.replaceFirst("u-(.*)component", "$1"), true,
+                false);
+    } else if (stdName.matches("v-.*component")) {
+        return new IdComponentEastNorth(stdName.replaceFirst("v-(.*)component", "$1"), false,
+                false);
+    } else if (stdName.matches(".*x_.*velocity")) {
+        return new IdComponentEastNorth(stdName.replaceFirst("(.*)x_(.*velocity)", "$1$2"),
+                true, false);
+    } else if (stdName.matches(".*y_.*velocity")) {
+        return new IdComponentEastNorth(stdName.replaceFirst("(.*)y_(.*velocity)", "$1$2"),
+                false, false);
+    }
+    return null;
+}
+```

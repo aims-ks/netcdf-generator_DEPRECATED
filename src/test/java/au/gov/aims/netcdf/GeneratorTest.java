@@ -58,7 +58,12 @@ public class GeneratorTest {
      * @throws IOException
      * @throws InvalidRangeException
      */
-    public static void generateTest(Generator netCDFGenerator, DateTime startDate, DateTime endDate, File outputFile) throws IOException, InvalidRangeException {
+    public static void generateTest(
+            Generator netCDFGenerator,
+            DateTime startDate,
+            DateTime endDate,
+            File outputFile) throws IOException, InvalidRangeException {
+
         Random rng = new Random(6930);
 
         float[] lats = Generator.getCoordinates(-50, 50, 100);

@@ -42,7 +42,7 @@ import java.util.TreeSet;
  * Java DOC:
  *     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/javadoc/ucar/nc2/NetcdfFileWriter.html
  *
- * Source:
+ * UCAR source code:
  *     https://github.com/Unidata/netcdf-java/tree/master/cdm/core/src/main/java/ucar
  */
 public class Generator {
@@ -53,7 +53,7 @@ public class Generator {
     //     by adding the following line (for example) in the definition of the variable:
     //         writer.addVariableAttribute(variableName, "_FillValue", 9999);
     //     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/NetcdfDataset.html
-    //     or simply using Double.NaN (as in eReefs NetCDF files).
+    //     or simply using Double.NaN (as in most NetCDF files).
     // "_FillValue", "missing_value" have different meanings:
     //     Sometimes there is need for more than one value to represent different kinds of missing data.
     //     In this case, the user should use one or more other variable attributes for the different kinds
@@ -66,7 +66,8 @@ public class Generator {
     /**
      * Generate a NetCDF file containing at least one data hypercube
      * @param outputFile Where the NetCDF file will be saved.
-     * @param datasets Data to save in the file. Only specify more than one when creating multiple data hypercubes.
+     * @param datasets Data to save in the file. Only specify one,
+     *     unless you want multiple data hypercubes in the NetCDF file.
      * @throws IOException
      * @throws InvalidRangeException
      */
@@ -79,7 +80,7 @@ public class Generator {
             throw new IllegalArgumentException("No dataset provided");
         }
 
-        // Instanciate the UCAR NetCDF writer (with a try-with-resource to ensure it get closed)
+        // Instantiate the UCAR NetCDF writer (with a try-with-resource to ensure it gets closed)
         try (NetcdfFileWriter writer = NetcdfFileWriter.createNew(NETCDF_VERSION, outputFile.getAbsolutePath())) {
 
             List<Bundle> bundleList = new ArrayList<Bundle>();
@@ -124,8 +125,8 @@ public class Generator {
                 }
 
                 // Coordinate axis attributes.
-                //     It seems to work without them (except for the vertical azis).
-                //     I added them for all axis to follow the documentation.
+                //     It seems to work without them (except for the vertical axis).
+                //     I added them for all axes to follow the documentation.
                 //     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/reference/CoordinateAttributes.html
                 //     https://www.unidata.ucar.edu/software/netcdf-java/v4.6/tutorial/CoordinateAttributes.html
 
@@ -185,7 +186,7 @@ public class Generator {
 
 
             // Create the file and switch off "define mode":
-            //     It's no longer possible to define dimensions / variables pass this point.
+            // It's no longer possible to define dimensions / variables pass this point.
             writer.create();
 
 
@@ -207,7 +208,7 @@ public class Generator {
                     allDateTime.addAll(variable.getDates());
                 }
 
-                // Write the time dimension data to the NetCDf file
+                // Write the time dimension data to the NetCDF file
                 if (!allDateTime.isEmpty()) {
                     // Initialise the data array for the time variable
                     Array timeData = Array.factory(DataType.INT, new int[] {1});
@@ -233,7 +234,8 @@ public class Generator {
 
                     if (abstractVariable instanceof NetCDFVariable) {
                         // Variables without time nor depth (such as bathymetry "botz")
-                        ArrayDouble.D2 variableData = new ArrayDouble.D2(bundle.latDimension.getLength(), bundle.lonDimension.getLength());
+                        ArrayDouble.D2 variableData = new ArrayDouble.D2(
+                                bundle.latDimension.getLength(), bundle.lonDimension.getLength());
 
                         for (int latIndex=0; latIndex<bundle.latDimension.getLength(); latIndex++) {
                             float latValue = lats[latIndex];
@@ -251,7 +253,8 @@ public class Generator {
                     } else if (abstractVariable instanceof NetCDFTimeVariable) {
                         // Variables with time, but no depth (such as wind)
                         int recordIndex = 0;
-                        ArrayDouble.D3 variableData = new ArrayDouble.D3(1, bundle.latDimension.getLength(), bundle.lonDimension.getLength());
+                        ArrayDouble.D3 variableData = new ArrayDouble.D3(
+                                1, bundle.latDimension.getLength(), bundle.lonDimension.getLength());
                         for (DateTime date : allDateTime) {
                             // Set the data for each coordinate (lon / lat),
                             //     for each variable (temp, salt, current, etc),
@@ -276,7 +279,9 @@ public class Generator {
                     } else if (abstractVariable instanceof NetCDFTimeDepthVariable) {
                         // Variables with time and depth (such as salinity, temperature, current)
                         int recordIndex = 0;
-                        ArrayDouble.D4 variableData = new ArrayDouble.D4(1, bundle.latDimension.getLength(), bundle.lonDimension.getLength(), bundle.heightDimension.getLength());
+                        ArrayDouble.D4 variableData = new ArrayDouble.D4(
+                                1, bundle.latDimension.getLength(), bundle.lonDimension.getLength(),
+                                bundle.heightDimension.getLength());
                         for (DateTime date : allDateTime) {
                             // Set the data for each coordinate (lon / lat),
                             //     for each variable (temp, salt, current, etc),
@@ -328,7 +333,7 @@ public class Generator {
      * @param lon Longitude coordinate, in degree
      * @param min Minimum output value
      * @param max Maximum output value
-     * @param frequency Distance between gradient, in lon / lat degree
+     * @param frequency Distance between gradient, in unit of lon / lat degree
      * @param angle The angle of the gradient, in degree. 0 for horizontal, turning clockwise.
      * @param noise Level of noise, between [0, 1]
      * @return A value between [min, max] for the given coordinate.
@@ -359,7 +364,7 @@ public class Generator {
      * @param lon Longitude coordinate, in degree
      * @param min Minimum output value
      * @param max Maximum output value
-     * @param diameter Diameter of the circles
+     * @param diameter Diameter of the circles, in unit of lon / lat degree
      * @param noise Level of noise, between [0, 1]
      * @return A value between [min, max] for the given coordinate.
      */
