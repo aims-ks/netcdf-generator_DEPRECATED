@@ -1,20 +1,6 @@
 /*
- *  Copyright (C) 2019 Australian Institute of Marine Science
- *
- *  Contact: Gael Lafond <g.lafond@aims.gov.au>
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Copyright (c) Australian Institute of Marine Science, 2021.
+ * @author Gael Lafond <g.lafond@aims.gov.au>
  */
 package au.gov.aims.netcdf;
 
@@ -154,7 +140,7 @@ public class Example implements Closeable {
     /**
      * Test vector variables
      *
-     * NOTE: I have a WHOLE day, and some extra hours after work to figure out this one.
+     * NOTE: It took a WHOLE day, and some extra hours after work to figure out this one.
      *     To create a vector variable, you do not need to bundle them in a Group or a Structure,
      *     that breaks everything. Those hierarchies are not well supported.
      *     It all works with some "magic" regexes on some attributes:
